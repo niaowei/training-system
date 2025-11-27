@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>湖北机场集团地服公司培训数据舱看板</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.2/dist/echarts.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+  <style>
+    body {
+      background: radial-gradient(circle at top, #0a0f2c, #000);
+      color: #dce3ff;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    h2, h3 {
+      color: #5ab3ff;
+      text-shadow: 0 0 10px #1e90ff;
+    }
+    main.container {
+      padding-top: 1rem;
+    }
+    .chart-box {
+      height: 420px;
+      background: rgba(15, 25, 50, 0.85);
+      border: 1px solid rgba(90, 179, 255, 0.3);
+      border-radius: 10px;
+      padding: 1rem;
+      box-shadow: 0 0 25px rgba(0, 174, 255, 0.3);
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.3s;
+    }
+    .chart-box:hover {
+      transform: scale(1.02);
+      box-shadow: 0 0 40px rgba(0,174,255,0.6);
+    }
+    .progress-bar {
+      background: rgba(255,255,255,0.1);
+      border-radius: 20px;
+      height: 14px;
+      overflow: hidden;
+      margin-bottom: 0.4rem;
+    }
+    .progress-inner {
+      height: 100%;
+      border-radius: 20px;
+      text-align: right;
+      padding-right: 5px;
+      color: #fff;
+      font-size: 0.7rem;
+      line-height: 14px;
+    }
+    footer {
+      text-align: center;
+      color: #7da0ff;
+      margin-top: 1rem;
+    }
+    /* 弹窗查看大图 */
+    #modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+    }
+    #modalChart {
+      width: 85%;
+      height: 85%;
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <h2 style="text-align:center;">湖北机场集团地服公司 · 培训系统一级数据舱</h2>
+    <h3 style="text-align:center;">2025年度可视化</h3>
+
+    <div class="grid">
+      <div id="deptChart" class="chart-box"></div>
+      <div id="trainTypeChart" class="chart-box"></div>
+      <div id="coverageChart" class="chart-box"></div>
+      <div id="trendChart" class="chart-box"></div>
+      <div id="radarChart" class="chart-box"></div>
+    </div>
+
+    <h3>部门培训完成率排名</h3>
+    <div id="rankings"></div>
+  </main>
+
+  <footer class="container">
+    <small>© 2025 湖北机场集团地服公司 培训系统数据舱看板</small>
+  </footer>
+
+  <!-- 模态框放大查看图表 -->
+  <div id="modal">
+    <div id="modalChart"></div>
+  </div>
+
+  <script>
+    function createChart(id, option) {
+      const chart = echarts.init(document.getElementById(id));
+      chart.setOption(option);
+      chart.on('click', function() {
+        showModal(option);
+      });
+      window.addEventListener('resize', () => chart.resize());
+    }
+
+    const deptOption = {
+      backgroundColor: 'transparent',
+      title: { text: '各部门人员分布', left: 'center', textStyle: { color: '#5ab3ff' } },
+      xAxis: { type: 'category', axisLabel: { color: '#b0cfff', interval: 0, rotate: 20 }, data: ['综合管理室','经营管理室','质量安全室','运行控制室','国际客运室','国内客运室','中转服务室','机务工程室','站坪保障室','车辆维修室','襄阳分公司'] },
+      yAxis: { type: 'value', axisLabel: { color: '#b0cfff' }, splitLine: { lineStyle: { color: '#223a70' } } },
+      series: [{ data: [10,5,6,46,101,99,99,99,74,15,48], type: 'bar', itemStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#4facfe'},{offset:1,color:'#00f2fe'}]) } }]
+    };
+
+    const trainTypeOption = {
+      title: { text: '专项培训类型占比', left: 'center', textStyle: { color: '#5ab3ff' } },
+      series: [{ type: 'pie', radius: ['30%','70%'], roseType: 'radius',
+        label: { color: '#b0cfff' },
+        data: [
+          { value: 28, name: '危险品培训' },
+          { value: 25, name: '上岗证培训' },
+          { value: 20, name: '安保培训' },
+          { value: 15, name: '航站楼准入培训' },
+          { value: 12, name: '飞行区准入培训' }
+        ]
+      }]
+    };
+
+    const coverageOption = {
+      title: { text: '培训覆盖率对比', left: 'center', textStyle: { color: '#5ab3ff' } },
+      xAxis: { type: 'value', max: 100, axisLabel: { color: '#b0cfff' }, splitLine: { lineStyle: { color: '#223a70' } } },
+      yAxis: { type: 'category', data: ['综合管理室','经营管理室','质量安全室','运行控制室','国际客运室','国内客运室','中转服务室','机务工程室','站坪保障室','车辆维修室','襄阳分公司'], axisLabel: { color: '#b0cfff' } },
+      series: [{ type: 'bar', data: [100,95,90,98,97,93,96,94,92,91,89], itemStyle: { color: function(p){ const c=['#00f2fe','#4facfe','#43e97b','#fa709a','#f5a623']; return c[p.dataIndex%c.length]; } } }]
+    };
+
+    const trendOption = {
+      title: { text: '月度培训趋势', left: 'center', textStyle: { color: '#5ab3ff' } },
+      legend: { bottom: 0, textStyle: { color: '#b0cfff' } },
+      xAxis: { type: 'category', data: ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'], axisLabel: { color: '#b0cfff' } },
+      yAxis: { type: 'value', axisLabel: { color: '#b0cfff' }, splitLine: { lineStyle: { color: '#223a70' } } },
+      series: [
+        { name: '公司级', type: 'line', data: [12,15,20,18,22,24,26,25,28,30,29,32], smooth: true, lineStyle: { color: '#4facfe' } },
+        { name: '部门级', type: 'line', data: [25,30,28,35,38,36,40,42,41,44,46,48], smooth: true, lineStyle: { color: '#00f2fe' } }
+      ]
+    };
+
+    const radarOption = {
+      title: { text: '培训资源分布', left: 'center', textStyle: { color: '#5ab3ff' } },
+      radar: { indicator: [
+        { name: '线上课程', max: 100 },
+        { name: '线下讲座', max: 100 },
+        { name: '内部师资', max: 100 },
+        { name: '外部讲师', max: 100 },
+        { name: '系统学习', max: 100 }
+      ], axisName: { color: '#b0cfff' }, splitLine: { lineStyle: { color: ['#1a3970'] } } },
+      series: [{ type: 'radar', data: [{ value: [85,78,92,70,88], name: '资源占比', areaStyle: { color: 'rgba(90,179,255,0.3)' }, lineStyle: { color: '#4facfe' } }] }]
+    };
+
+    createChart('deptChart', deptOption);
+    createChart('trainTypeChart', trainTypeOption);
+    createChart('coverageChart', coverageOption);
+    createChart('trendChart', trendOption);
+    createChart('radarChart', radarOption);
+
+    // 排名条
+    const rankingData = [
+      { name: '综合管理室', rate: 100 },{ name: '运行控制室', rate: 98 },{ name: '国际客运室', rate: 97 },{ name: '质量安全室', rate: 95 },{ name: '国内客运室', rate: 93 },{ name: '中转服务室', rate: 91 },{ name: '机务工程室', rate: 89 },{ name: '站坪保障室', rate: 88 },{ name: '经营管理室', rate: 87 },{ name: '车辆维修室', rate: 85 },{ name: '襄阳分公司', rate: 82 }
+    ];
+    const rankingDiv = document.getElementById('rankings');
+    rankingData.forEach(d=>{
+      const div=document.createElement('div');
+      const color=d.rate>95?'#00f2fe':d.rate>90?'#4facfe':'#f5a623';
+      div.innerHTML=`<p>${d.name} - ${d.rate}%</p><div class='progress-bar'><div class='progress-inner' style='width:${d.rate}%;background:${color};'>${d.rate}%</div></div>`;
+      rankingDiv.appendChild(div);
+    });
+
+    // 点击放大
+    const modal=document.getElementById('modal');
+    const modalChartDiv=document.getElementById('modalChart');
+    function showModal(option){
+      modal.style.display='flex';
+      const modalChart=echarts.init(modalChartDiv);
+      modalChart.setOption(option);
+    }
+    modal.addEventListener('click',()=>{modal.style.display='none';});
+  </script>
+</body>
+</html>
