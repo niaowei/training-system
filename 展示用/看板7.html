@@ -1,0 +1,2363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>地服公司培训管理平台智慧舱</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- ECharts CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+  <style>
+    :root {
+      --bg-color: #020617;
+      --bg-gradient: radial-gradient(circle at top, #0b1220 0, #020617 55%, #000 100%);
+      --card-bg: rgba(15, 23, 42, 0.96);
+      --card-border: rgba(30, 64, 175, 0.55);
+      --accent: #38bdf8;
+      --accent-soft: rgba(56, 189, 248, 0.2);
+      --accent-secondary: #6366f1;
+      --accent-gold: #facc15;
+      --text-main: #e5e7eb;
+      --text-muted: #9ca3af;
+      --danger: #f97373;
+      --warning: #fbbf24;
+      --success: #22c55e;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+        "Noto Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--bg-gradient);
+      color: var(--text-main);
+      min-height: 100vh;
+      padding: 16px;
+    }
+
+    .dashboard {
+      max-width: 1440px;
+      margin: 0 auto;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 16px;
+      gap: 16px;
+      position: relative;
+    }
+
+    .header-left h1 {
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+    }
+
+    .header-left p {
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .header-right {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .header-center {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    .clock-pill {
+      pointer-events: auto;
+      font-size: 12px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: radial-gradient(circle at top, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.96));
+      border: 1px solid rgba(56, 189, 248, 0.6);
+      box-shadow:
+        0 0 16px rgba(56, 189, 248, 0.35),
+        0 0 40px rgba(15, 23, 42, 0.9);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-main);
+      animation: breathe-slow 4s ease-in-out infinite;
+    }
+
+    .clock-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.8);
+      animation: ping 1.6s cubic-bezier(0.36, 0, 0.66, -0.56) infinite;
+    }
+
+    .clock-label {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .clock-time {
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.06em;
+    }
+
+    .tag {
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.55);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+
+    .tag span {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .tag-secondary span {
+      color: var(--accent-secondary);
+    }
+
+    .main-layout {
+      display: grid;
+      grid-template-columns: 2.7fr 1.3fr;
+      gap: 16px;
+      align-items: flex-start;
+    }
+
+    .main-left,
+    .main-right {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 14px;
+      border: 1px solid var(--card-border);
+      box-shadow: 0 18px 45px rgba(15, 23, 42, 0.85);
+      padding: 12px 14px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      border: 1px solid transparent;
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.28), rgba(30, 64, 175, 0.22))
+        border-box;
+      -webkit-mask:
+        linear-gradient(#000 0 0) padding-box,
+        linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      opacity: 0.22;
+      pointer-events: none;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      z-index: 1;
+      position: relative;
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .card-subtitle {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .card-metric {
+      font-size: 20px;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    .card-trend {
+      font-size: 11px;
+      margin-top: 4px;
+    }
+
+    .trend-up {
+      color: var(--success);
+    }
+
+    .trend-tag {
+      background: rgba(34, 197, 94, 0.1);
+      border-radius: 999px;
+      padding: 1px 6px;
+      margin-left: 4px;
+    }
+
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-auto-rows: minmax(300px, 1fr);
+      gap: 12px;
+    }
+
+    .chart-card {
+      padding-top: 10px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chart-card .card-body {
+      margin-top: 4px;
+      flex: 1;
+      min-height: 230px;
+    }
+
+    .chart {
+      width: 100%;
+      height: 100%;
+    }
+
+    .chart-toolbar {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .btn-zoom {
+      cursor: pointer;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--text-muted);
+      font-size: 11px;
+      padding: 3px 7px;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      transition: all 0.15s ease-out;
+    }
+
+    .btn-zoom:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+      transform: translateY(-1px);
+    }
+
+    .badge {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--accent);
+      border: 1px solid rgba(56, 189, 248, 0.5);
+    }
+
+    .badge-secondary {
+      background: rgba(37, 99, 235, 0.12);
+      color: var(--accent-secondary);
+      border-color: rgba(37, 99, 235, 0.5);
+    }
+
+    .chart-card.full-span {
+      grid-column: 1 / -1;
+    }
+
+    /* 预警 & 待办 */
+
+    .warning-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 8px;
+      font-size: 12px;
+    }
+
+    .warning-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 8px;
+      border-radius: 8px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(55, 65, 81, 0.9);
+    }
+
+    .warning-left {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .warning-title {
+      font-size: 12px;
+    }
+
+    .warning-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .pill {
+      font-size: 11px;
+      padding: 3px 7px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+
+    .pill-danger {
+      background: rgba(248, 113, 113, 0.1);
+      color: var(--danger);
+      border: 1px solid rgba(248, 113, 113, 0.5);
+    }
+
+    .pill-warning {
+      background: rgba(250, 204, 21, 0.08);
+      color: var(--warning);
+      border: 1px solid rgba(250, 204, 21, 0.45);
+    }
+
+    .pill-info {
+      background: rgba(56, 189, 248, 0.08);
+      color: var(--accent);
+      border: 1px solid rgba(56, 189, 248, 0.45);
+    }
+
+    .todo-list {
+      margin-top: 10px;
+      border-top: 1px dashed rgba(75, 85, 99, 0.9);
+      padding-top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 12px;
+    }
+
+    .todo-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .todo-desc {
+      color: var(--text-muted);
+    }
+
+    /* 部门完成率排名 */
+
+    .ranking-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 8px;
+      font-size: 12px;
+    }
+
+    .ranking-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .ranking-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .ranking-dept {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .ranking-index {
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-right: 4px;
+    }
+
+    .ranking-index.top {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .ranking-value {
+      font-weight: 500;
+    }
+
+    .progress-bar {
+      height: 7px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.95);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: inherit;
+      transition: width 0.4s ease-out;
+    }
+
+    .pf-high {
+      background: linear-gradient(90deg, #22c55e, #4ade80, #a3e635);
+    }
+
+    .pf-mid {
+      background: linear-gradient(90deg, #38bdf8, #0ea5e9);
+    }
+
+    .pf-low {
+      background: linear-gradient(90deg, #fb923c, #f97316, #ef4444);
+    }
+
+    .badge-risk {
+      font-size: 10px;
+      padding: 1px 5px;
+      border-radius: 999px;
+      background: rgba(248, 113, 113, 0.1);
+      color: var(--danger);
+      border: 1px solid rgba(248, 113, 113, 0.4);
+    }
+
+    /* 值班经理信息 & 地图 */
+
+    .duty-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 1.4fr;
+      gap: 8px;
+      margin-top: 6px;
+      align-items: stretch;
+    }
+
+    .duty-info {
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .duty-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .duty-label {
+      color: var(--text-muted);
+    }
+
+    .duty-value {
+      color: var(--text-main);
+      font-weight: 500;
+      text-align: right;
+    }
+
+    .duty-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--success);
+      border: 1px solid rgba(34, 197, 94, 0.6);
+      margin-top: 4px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--success);
+      box-shadow: 0 0 8px rgba(34, 197, 94, 0.85);
+    }
+
+    .duty-map {
+      position: relative;
+      border-radius: 10px;
+      background: #020617;
+      border: 1px solid rgba(30, 64, 175, 0.9);
+      min-height: 170px;
+      height: 170px;
+      overflow: hidden;
+      cursor: zoom-in;
+    }
+
+    .duty-map iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      border-radius: 10px;
+    }
+
+    .duty-map-coord {
+      position: absolute;
+      left: 8px;
+      bottom: 6px;
+      font-size: 10px;
+      color: var(--text-main);
+      background: rgba(15, 23, 42, 0.85);
+      padding: 2px 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+    }
+
+    .duty-map-refresh {
+      position: absolute;
+      right: 8px;
+      top: 6px;
+      font-size: 10px;
+      color: var(--accent);
+      background: rgba(15, 23, 42, 0.9);
+      padding: 2px 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(56, 189, 248, 0.6);
+    }
+
+    .duty-map-hint {
+      position: absolute;
+      left: 8px;
+      top: 6px;
+      font-size: 10px;
+      color: var(--text-muted);
+      background: rgba(15, 23, 42, 0.85);
+      padding: 2px 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(75, 85, 99, 0.9);
+    }
+
+    .duty-cards {
+      margin-top: 10px;
+      padding-top: 6px;
+      border-top: 1px dashed rgba(75, 85, 99, 0.9);
+    }
+
+    .duty-cards-title {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .duty-card-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .duty-card {
+      cursor: pointer;
+      border-radius: 10px;
+      border: 1px solid rgba(75, 85, 99, 0.9);
+      background: rgba(15, 23, 42, 0.9);
+      padding: 6px 8px;
+      font-size: 11px;
+      min-width: 115px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      transition: all 0.15s ease-out;
+      color: var(--text-main);
+    }
+
+    .duty-card-level {
+      color: var(--accent-secondary);
+    }
+
+    .duty-card-post {
+      font-weight: 500;
+    }
+
+    .duty-card-name {
+      color: var(--accent-gold);
+    }
+
+    .duty-card-active {
+      border-color: var(--accent);
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.55);
+      background: radial-gradient(circle at top, rgba(15, 23, 42, 0.95), #020617);
+    }
+
+    /* 培训实施滚动列表 */
+
+    .training-log-body {
+      margin-top: 8px;
+      height: 210px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .training-log-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .training-log-item {
+      padding: 6px 2px;
+      border-bottom: 1px dashed rgba(75, 85, 99, 0.9);
+      cursor: pointer;
+      transition: background 0.15s ease-out;
+    }
+
+    .training-log-item:hover {
+      background: rgba(15, 23, 42, 0.9);
+    }
+
+    .training-log-main {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) 1.1fr 0.6fr;
+      gap: 6px;
+      font-size: 12px;
+      align-items: center;
+    }
+
+    .training-log-name {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .training-log-time {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .training-log-count {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .training-log-detail {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 3px;
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: max-height 0.22s ease-out, opacity 0.22s ease-out;
+    }
+
+    .training-log-item.expanded .training-log-detail {
+      max-height: 80px;
+      opacity: 1;
+    }
+
+    /* 通用放大弹窗 */
+
+    .chart-modal {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.18s ease-out;
+      z-index: 50;
+    }
+
+    .chart-modal.active {
+      pointer-events: auto;
+      opacity: 1;
+    }
+
+    .chart-modal-overlay {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top, rgba(15, 23, 42, 0.9), rgba(0, 0, 0, 0.96));
+      backdrop-filter: blur(4px);
+    }
+
+    .chart-modal-dialog {
+      position: relative;
+      width: min(1100px, 96vw);
+      height: min(620px, 82vh);
+      background: #020617;
+      border-radius: 18px;
+      border: 1px solid rgba(148, 163, 184, 0.9);
+      box-shadow: 0 28px 80px rgba(0, 0, 0, 0.95);
+      padding: 10px 12px 12px;
+      z-index: 55;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chart-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .chart-modal-title {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .chart-modal-close {
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.9);
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 2px 8px;
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    .chart-modal-close:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .chart-modal-content {
+      flex: 1;
+      margin-top: 4px;
+      border-radius: 12px;
+      background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.9), #020617 45%, #000 100%);
+      border: 1px solid rgba(30, 64, 175, 0.9);
+      padding: 6px;
+      display: flex;
+    }
+
+    .chart-modal-inner {
+      width: 100%;
+      height: 100%;
+    }
+
+    .map-modal-iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      border-radius: 12px;
+    }
+
+    /* 响应式 */
+
+    @media (max-width: 1200px) {
+      .main-layout {
+        grid-template-columns: 1fr;
+      }
+      .main-right {
+        order: -1;
+      }
+      .kpi-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .charts-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 10px;
+      }
+      .header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .header-right {
+        justify-content: flex-start;
+      }
+      .header-center {
+        position: static;
+        transform: none;
+        margin-top: 8px;
+      }
+      .kpi-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* 在线学员计数器动效 & 呼吸效果 */
+
+    #online-counter {
+      display: inline-block;
+      min-width: 32px;
+      text-align: right;
+      transition: transform 0.25s ease-out, color 0.25s ease-out, text-shadow 0.25s ease-out;
+      font-variant-numeric: tabular-nums;
+    }
+
+    #online-counter.online-pulse {
+      transform: translateY(-1px) scale(1.05);
+      color: var(--accent-gold);
+      text-shadow:
+        0 0 8px rgba(250, 204, 21, 0.6),
+        0 0 14px rgba(15, 23, 42, 0.9);
+    }
+
+    @keyframes breathe-slow {
+      0% {
+        box-shadow:
+          0 0 10px rgba(56, 189, 248, 0.3),
+          0 0 30px rgba(15, 23, 42, 0.8);
+        border-color: rgba(56, 189, 248, 0.4);
+      }
+      50% {
+        box-shadow:
+          0 0 18px rgba(56, 189, 248, 0.55),
+          0 0 36px rgba(15, 23, 42, 0.9);
+        border-color: rgba(56, 189, 248, 0.8);
+      }
+      100% {
+        box-shadow:
+          0 0 10px rgba(56, 189, 248, 0.3),
+          0 0 30px rgba(15, 23, 42, 0.8);
+        border-color: rgba(56, 189, 248, 0.4);
+      }
+    }
+
+    @keyframes ping {
+      0% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      80% {
+        transform: scale(1.4);
+        opacity: 0;
+      }
+      100% {
+        transform: scale(1.4);
+        opacity: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard">
+    <!-- 顶部标题 -->
+    <header class="header">
+      <div class="header-left">
+        <h1>地服公司培训管理平台智慧舱</h1>
+        <p>数据日期：2025-12-01 · 单位：人 / 次 · 部分数据来自年度培训工作情况</p>
+      </div>
+
+      <!-- 中间时钟 -->
+      <div class="header-center">
+        <div class="clock-pill">
+          <div class="clock-dot"></div>
+          <div>
+            <div class="clock-label">系统时间 · 实时监控</div>
+            <div id="clock-time" class="clock-time">--:--:--</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <div class="tag">公司级总人数：<span>928</span> 人</div>
+        <div class="tag tag-secondary">今日在岗：<span>812</span> 人</div>
+        <div class="tag">
+          当前在线学员：
+          <span id="online-counter">263</span>
+          人
+        </div>
+      </div>
+    </header>
+
+    <main class="main-layout">
+      <!-- 左侧主图表区域 -->
+      <section class="main-left">
+        <!-- KPI 卡片（使用你截图里的数据） -->
+        <div class="kpi-row">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">
+                  新入职及安全服务类培训
+                  <span class="badge">公司层级</span>
+                </div>
+                <div class="card-subtitle">
+                  公司层级开展新入职人员、安全服务类等培训工作 22 批次
+                </div>
+              </div>
+            </div>
+            <div class="card-metric">11,550 人次</div>
+            <div class="card-trend trend-up">
+              共 22 批次，覆盖全年新入职及安服岗位
+              <span class="trend-tag">批次合格</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">
+                  上岗证到期员工复审
+                  <span class="badge badge-secondary">6 个操作部门</span>
+                </div>
+                <div class="card-subtitle">
+                  国内 / 国际客运室、站坪保障室、机务工程中心、运行控制室、襄阳分公司
+                </div>
+              </div>
+            </div>
+            <div class="card-metric">573 人</div>
+            <div class="card-trend trend-up">
+              上岗证到期员工完成内部岗位资质证书复审、复训
+              <span class="trend-tag">证书有效</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">
+                  新进岗 / 转岗岗位资质审核
+                  <span class="badge">内部岗位资质证书</span>
+                </div>
+                <div class="card-subtitle">
+                  全年完成新进岗、转岗员工内部岗位资质证书审核审批
+                </div>
+              </div>
+            </div>
+            <div class="card-metric">54 人</div>
+            <div class="card-trend trend-up">
+              全部完成审批，确保岗位任职合格
+              <span class="trend-tag">岗前把关</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">
+                  危险品初训及复训
+                  <span class="badge">3–11 月</span>
+                </div>
+                <div class="card-subtitle">
+                  组织危险品初训取证及复训培训（公司及操作部门联合）
+                </div>
+              </div>
+            </div>
+            <div class="card-metric">211 人</div>
+            <div class="card-trend trend-up">
+              3–11 月分批完成危品初训与复训
+              <span class="trend-tag">重点管控</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 图表网格 -->
+        <div class="charts-grid">
+          <!-- 月度培训趋势 -->
+          <div class="card chart-card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">
+                  月度培训趋势
+                  <span class="badge">折线 / 柱状</span>
+                </div>
+                <div class="card-subtitle">
+                  公司级 + 部门级培训次数走势（2025 年）
+                </div>
+              </div>
+              <div class="chart-toolbar">
+                <button
+                  class="btn-zoom"
+                  data-chart-id="chart-monthly-trend"
+                  data-chart-title="月度培训趋势（放大）"
+                >
+                  ⤢ 放大
+                </button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div id="chart-monthly-trend" class="chart"></div>
+            </div>
+          </div>
+
+          <!-- 各部门培训覆盖率 -->
+          <div class="card chart-card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">
+                  各部门培训覆盖率对比
+                  <span class="badge">条形图</span>
+                </div>
+                <div class="card-subtitle">
+                  以部门在岗人数为基数的年度培训覆盖率
+                </div>
+              </div>
+              <div class="chart-toolbar">
+                <button
+                  class="btn-zoom"
+                  data-chart-id="chart-dept-coverage"
+                  data-chart-title="各部门培训覆盖率对比（放大）"
+                >
+                  ⤢ 放大
+                </button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div id="chart-dept-coverage" class="chart"></div>
+            </div>
+          </div>
+
+          <!-- 专项培训次数 -->
+          <div class="card chart-card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">
+                  专项培训次数
+                  <span class="badge">柱状图</span>
+                </div>
+                <div class="card-subtitle">
+                  危险品 / 上岗证 / 安保 / 航站楼准入 / 飞行区准入 / 服务礼仪
+                </div>
+              </div>
+              <div class="chart-toolbar">
+                <button
+                  class="btn-zoom"
+                  data-chart-id="chart-special-training"
+                  data-chart-title="专项培训次数分布（放大）"
+                >
+                  ⤢ 放大
+                </button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div id="chart-special-training" class="chart"></div>
+            </div>
+          </div>
+
+          <!-- 各类培训完成情况 -->
+          <div class="card chart-card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">
+                  各类培训完成情况
+                  <span class="badge badge-secondary">堆叠柱状</span>
+                </div>
+                <div class="card-subtitle">
+                  公司级 / 部门级 / 专项培训 完成状态分布
+                </div>
+              </div>
+              <div class="chart-toolbar">
+                <button
+                  class="btn-zoom"
+                  data-chart-id="chart-completion-status"
+                  data-chart-title="各类培训完成情况（放大）"
+                >
+                  ⤢ 放大
+                </button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div id="chart-completion-status" class="chart"></div>
+            </div>
+          </div>
+
+          <!-- 培训资源分布 -->
+          <div class="card chart-card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">
+                  培训资源分布
+                  <span class="badge">饼图</span>
+                </div>
+                <div class="card-subtitle">
+                  内部讲师 / 外部讲师 / 线上课程 / 实训场地 / 仿真设备
+                </div>
+              </div>
+              <div class="chart-toolbar">
+                <button
+                  class="btn-zoom"
+                  data-chart-id="chart-resource-distribution"
+                  data-chart-title="培训资源分布（放大）"
+                >
+                  ⤢ 放大
+                </button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div id="chart-resource-distribution" class="chart"></div>
+            </div>
+          </div>
+
+          <!-- 雷达图 -->
+          <div class="card chart-card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">
+                  重点部门专项培训能力雷达图
+                  <span class="badge">雷达图</span>
+                </div>
+                <div class="card-subtitle">
+                  国际客运室 / 国内客运室 / 运行控制室 多维对比
+                </div>
+              </div>
+              <div class="chart-toolbar">
+                <button
+                  class="btn-zoom"
+                  data-chart-id="chart-radar"
+                  data-chart-title="重点部门专项培训能力雷达图（放大）"
+                >
+                  ⤢ 放大
+                </button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div id="chart-radar" class="chart"></div>
+            </div>
+          </div>
+
+          <!-- 年度重点培训甘特图（新加，左侧加长） -->
+          <div class="card chart-card full-span">
+            <div class="card-header">
+              <div>
+                <div class="card-title">
+                  年度重点培训项目甘特图（示意）
+                  <span class="badge">时间轴</span>
+                </div>
+                <div class="card-subtitle">
+                  展示新入职及安全服务培训、上岗证到期复审、危险品初训及复训在全年中的时间安排
+                </div>
+              </div>
+              <div class="chart-toolbar">
+                <button
+                  class="btn-zoom"
+                  data-chart-id="chart-gantt"
+                  data-chart-title="年度重点培训项目甘特图（放大）"
+                >
+                  ⤢ 放大
+                </button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div id="chart-gantt" class="chart"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 右侧 -->
+      <aside class="main-right">
+        <!-- 预警与待办 -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">
+                预警与待办事项
+                <span class="badge">证书 / 培训任务</span>
+              </div>
+              <div class="card-subtitle">
+                支撑安全运行的关键培训与证书预警
+              </div>
+            </div>
+          </div>
+
+          <ul class="warning-list">
+            <li class="warning-item">
+              <div class="warning-left">
+                <div class="warning-title">30 天内到期证书：23 本</div>
+                <div class="warning-desc">
+                  主要集中在国际客运室 / 站坪保障室
+                </div>
+              </div>
+              <span class="pill pill-danger">高风险 · 需优先安排复训</span>
+            </li>
+            <li class="warning-item">
+              <div class="warning-left">
+                <div class="warning-title">60 天内到期证书：41 本</div>
+                <div class="warning-desc">
+                  含危险品 / 安保 / 飞行区准入资格
+                </div>
+              </div>
+              <span class="pill pill-warning">中风险 · 建议排入下月计划</span>
+            </li>
+            <li class="warning-item">
+              <div class="warning-left">
+                <div class="warning-title">新员工入职培训未完成：17 人</div>
+                <div class="warning-desc">
+                  集中在国内客运室 / 中转服务室
+                </div>
+              </div>
+              <span class="pill pill-info">需跟进 · 未完成禁止独立上岗</span>
+            </li>
+          </ul>
+
+          <div class="todo-list">
+            <div class="todo-item">
+              <span class="todo-desc">
+                下周将启动「2025Q4 危险品专项培训（第 3 期）」
+              </span>
+              <span class="pill pill-info">计划启动 · 运行控制室主责</span>
+            </div>
+            <div class="todo-item">
+              <span class="todo-desc">
+                补齐「飞行区准入培训」未完成人员名单确认
+              </span>
+              <span class="pill pill-warning">需部门经理确认</span>
+            </div>
+            <div class="todo-item">
+              <span class="todo-desc">安保专项复训方案评审会（公司级）</span>
+              <span class="pill pill-info">待综合管理室组织</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 培训实施实时记录 -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">
+                培训实施实时记录
+                <span class="badge">向上滚动 · 可展开</span>
+              </div>
+              <div class="card-subtitle">
+                最新录入按时间倒序自动滚动 · 点击查看详情
+              </div>
+            </div>
+          </div>
+
+          <div class="training-log-body">
+            <ul id="training-log" class="training-log-list">
+              <li class="training-log-item">
+                <div class="training-log-main">
+                  <span class="training-log-name">危险品基础培训（第 3 期）</span>
+                  <span class="training-log-time">2025-11-30 09:00</span>
+                  <span class="training-log-count">48 人</span>
+                </div>
+                <div class="training-log-detail">
+                  培训对象：国际客运室 / 站坪保障室新上岗人员；授课讲师：公司危险品内部讲师库 A 级讲师；地点：综合培训楼 302。
+                </div>
+              </li>
+              <li class="training-log-item">
+                <div class="training-log-main">
+                  <span class="training-log-name">上岗证复训集中培训（运行控制室）</span>
+                  <span class="training-log-time">2025-11-29 14:00</span>
+                  <span class="training-log-count">32 人</span>
+                </div>
+                <div class="training-log-detail">
+                  重点围绕运行管制流程、航班不正常处置案例展开，培训后统一组织线上测试，成绩纳入年度考核。
+                </div>
+              </li>
+              <li class="training-log-item">
+                <div class="training-log-main">
+                  <span class="training-log-name">安保专项培训（机场控制区通行）</span>
+                  <span class="training-log-time">2025-11-29 09:30</span>
+                  <span class="training-log-count">56 人</span>
+                </div>
+                <div class="training-log-detail">
+                  覆盖国际客运室、国内客运室、中转服务室相关班组，完成培训后在安检系统同步更新权限。
+                </div>
+              </li>
+              <li class="training-log-item">
+                <div class="training-log-main">
+                  <span class="training-log-name">航站楼准入培训（T3）</span>
+                  <span class="training-log-time">2025-11-28 15:00</span>
+                  <span class="training-log-count">27 人</span>
+                </div>
+                <div class="training-log-detail">
+                  内容含航站楼布局熟悉、旅客引导路径、消防疏散通道演练等，培训结束后需完成现场巡视签到。
+                </div>
+              </li>
+              <li class="training-log-item">
+                <div class="training-log-main">
+                  <span class="training-log-name">飞行区准入资格培训（联合实训）</span>
+                  <span class="training-log-time">2025-11-28 08:30</span>
+                  <span class="training-log-count">35 人</span>
+                </div>
+                <div class="training-log-detail">
+                  与机务工程室、站坪保障室联合组织，重点围绕机坪行车路线、FOD 管控、机坪作业安全注意事项。
+                </div>
+              </li>
+              <li class="training-log-item">
+                <div class="training-log-main">
+                  <span class="training-log-name">服务礼仪提升培训（国内客运室）</span>
+                  <span class="training-log-time">2025-11-27 16:00</span>
+                  <span class="training-log-count">42 人</span>
+                </div>
+                <div class="training-log-detail">
+                  结合航班延误场景、特殊旅客保障案例进行情景模拟，培训后开展现场抽查与神秘顾客评估。
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- 值班经理信息 -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">
+                值班经理信息
+                <span class="badge">机场 / 公司 / 部门 / 外站</span>
+              </div>
+              <div class="card-subtitle">
+                参考地面服务保障部值班表 · 支撑培训与运行联动
+              </div>
+            </div>
+          </div>
+
+          <div class="duty-grid">
+            <div class="duty-info">
+              <div class="duty-row">
+                <span class="duty-label">值班层级：</span>
+                <span id="duty-level" class="duty-value"></span>
+              </div>
+              <div class="duty-row">
+                <span class="duty-label">值班岗位：</span>
+                <span id="duty-post" class="duty-value"></span>
+              </div>
+              <div class="duty-row">
+                <span class="duty-label">值班经理：</span>
+                <span id="duty-name" class="duty-value"></span>
+              </div>
+              <div class="duty-row">
+                <span class="duty-label">联系电话：</span>
+                <span id="duty-phone" class="duty-value"></span>
+              </div>
+              <div class="duty-row">
+                <span class="duty-label">值班时段：</span>
+                <span id="duty-shift" class="duty-value"></span>
+              </div>
+              <div class="duty-row">
+                <span class="duty-label">当前位置：</span>
+                <span id="duty-location" class="duty-value"></span>
+              </div>
+              <div class="duty-status">
+                <span class="status-dot"></span>
+                <span id="duty-checkin-text">已打卡 · --:--</span>
+              </div>
+            </div>
+
+            <div id="duty-map" class="duty-map">
+              <iframe
+                id="duty-map-iframe"
+                src="https://uri.amap.com/marker?position=114.2099,30.7765&name=%E6%AD%A6%E6%B1%89%E5%A4%A9%E6%B2%B3%E5%9B%BD%E9%99%85%E6%9C%BA%E5%9C%BA&coordinate=gaode&callnative=0"
+                loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade"
+              ></iframe>
+              <div class="duty-map-hint">点击放大查看地图</div>
+              <div id="duty-map-coord" class="duty-map-coord">
+                坐标：N 30.7765° · E 114.2099°
+              </div>
+              <div id="duty-map-refresh" class="duty-map-refresh">
+                定位更新：1 秒前
+              </div>
+            </div>
+          </div>
+
+          <div class="duty-cards">
+            <div class="duty-cards-title">点击切换不同值班经理 · 自动更新信息与地图标注</div>
+            <div class="duty-card-list">
+              <button type="button" class="duty-card" data-duty-index="0">
+                <div class="duty-card-level">机场值班</div>
+                <div class="duty-card-post">机场一号</div>
+                <div class="duty-card-name">乔汉林</div>
+              </button>
+              <button type="button" class="duty-card" data-duty-index="1">
+                <div class="duty-card-level">公司值班</div>
+                <div class="duty-card-post">地服值班</div>
+                <div class="duty-card-name">陈湘</div>
+              </button>
+              <button type="button" class="duty-card" data-duty-index="2">
+                <div class="duty-card-level">公司值班</div>
+                <div class="duty-card-post">机坪值班</div>
+                <div class="duty-card-name">李俊</div>
+              </button>
+              <button type="button" class="duty-card" data-duty-index="3">
+                <div class="duty-card-level">公司值班</div>
+                <div class="duty-card-post">楼内值班</div>
+                <div class="duty-card-name">范菱</div>
+              </button>
+              <button type="button" class="duty-card" data-duty-index="4">
+                <div class="duty-card-level">部门值班</div>
+                <div class="duty-card-post">运行控制室</div>
+                <div class="duty-card-name">李俊</div>
+              </button>
+              <button type="button" class="duty-card" data-duty-index="5">
+                <div class="duty-card-level">部门值班</div>
+                <div class="duty-card-post">国内客运室</div>
+                <div class="duty-card-name">熊思凡</div>
+              </button>
+              <button type="button" class="duty-card" data-duty-index="6">
+                <div class="duty-card-level">部门值班</div>
+                <div class="duty-card-post">国际客运室</div>
+                <div class="duty-card-name">范菱</div>
+              </button>
+              <button type="button" class="duty-card" data-duty-index="7">
+                <div class="duty-card-level">部门值班</div>
+                <div class="duty-card-post">中转服务室</div>
+                <div class="duty-card-name">马力</div>
+              </button>
+              <button type="button" class="duty-card" data-duty-index="8">
+                <div class="duty-card-level">部门值班</div>
+                <div class="duty-card-post">机务工程室</div>
+                <div class="duty-card-name">胡治平</div>
+              </button>
+              <button type="button" class="duty-card" data-duty-index="9">
+                <div class="duty-card-level">部门值班</div>
+                <div class="duty-card-post">站坪保障室</div>
+                <div class="duty-card-name">王铭</div>
+              </button>
+              <button type="button" class="duty-card" data-duty-index="10">
+                <div class="duty-card-level">部门值班</div>
+                <div class="duty-card-post">车辆维修室</div>
+                <div class="duty-card-name">胡长军</div>
+              </button>
+              <button type="button" class="duty-card" data-duty-index="11">
+                <div class="duty-card-level">外站值班</div>
+                <div class="duty-card-post">襄阳分公司</div>
+                <div class="duty-card-name">李卓君</div>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 部门培训完成率排名 -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">
+                部门培训完成率排名
+                <span class="badge">进度条</span>
+              </div>
+              <div class="card-subtitle">按年度必修培训完成率排名</div>
+            </div>
+          </div>
+
+          <div class="ranking-list">
+            <div class="ranking-item">
+              <div class="ranking-head">
+                <div class="ranking-dept">
+                  <span class="ranking-index top">1</span>
+                  国际客运室
+                </div>
+                <div class="ranking-value">99.2%</div>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill pf-high" style="width: 99.2%"></div>
+              </div>
+            </div>
+
+            <div class="ranking-item">
+              <div class="ranking-head">
+                <div class="ranking-dept">
+                  <span class="ranking-index top">2</span>
+                  综合管理室
+                </div>
+                <div class="ranking-value">98.5%</div>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill pf-high" style="width: 98.5%"></div>
+              </div>
+            </div>
+
+            <div class="ranking-item">
+              <div class="ranking-head">
+                <div class="ranking-dept">
+                  <span class="ranking-index top">3</span>
+                  质量安全室
+                </div>
+                <div class="ranking-value">97.3%</div>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill pf-high" style="width: 97.3%"></div>
+              </div>
+            </div>
+
+            <div class="ranking-item">
+              <div class="ranking-head">
+                <div class="ranking-dept">
+                  <span class="ranking-index">4</span>
+                  运行控制室
+                </div>
+                <div class="ranking-value">95.1%</div>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill pf-mid" style="width: 95.1%"></div>
+              </div>
+            </div>
+
+            <div class="ranking-item">
+              <div class="ranking-head">
+                <div class="ranking-dept">
+                  <span class="ranking-index">5</span>
+                  站坪保障室
+                </div>
+                <div class="ranking-value">92.4%</div>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill pf-mid" style="width: 92.4%"></div>
+              </div>
+            </div>
+
+            <div class="ranking-item">
+              <div class="ranking-head">
+                <div class="ranking-dept">
+                  <span class="ranking-index">6</span>
+                  机务工程室
+                </div>
+                <div class="ranking-value">89.7%</div>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill pf-mid" style="width: 89.7%"></div>
+              </div>
+            </div>
+
+            <div class="ranking-item">
+              <div class="ranking-head">
+                <div class="ranking-dept">
+                  <span class="ranking-index">7</span>
+                  国内客运室
+                </div>
+                <div class="ranking-value">
+                  84.9%
+                  <span class="badge-risk">需提升</span>
+                </div>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill pf-low" style="width: 84.9%"></div>
+              </div>
+            </div>
+
+            <div class="ranking-item">
+              <div class="ranking-head">
+                <div class="ranking-dept">
+                  <span class="ranking-index">8</span>
+                  中转服务室
+                </div>
+                <div class="ranking-value">
+                  82.1%
+                  <span class="badge-risk">短板部门</span>
+                </div>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill pf-low" style="width: 82.1%"></div>
+              </div>
+            </div>
+
+            <div class="ranking-item">
+              <div class="ranking-head">
+                <div class="ranking-dept">
+                  <span class="ranking-index">9</span>
+                  襄阳分公司
+                </div>
+                <div class="ranking-value">88.3%</div>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill pf-mid" style="width: 88.3%"></div>
+              </div>
+            </div>
+
+            <div class="ranking-item">
+              <div class="ranking-head">
+                <div class="ranking-dept">
+                  <span class="ranking-index">10</span>
+                  车辆维修室
+                </div>
+                <div class="ranking-value">86.4%</div>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill pf-mid" style="width: 86.4%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <!-- 图表放大 Modal -->
+  <div id="chart-modal" class="chart-modal">
+    <div class="chart-modal-overlay"></div>
+    <div class="chart-modal-dialog">
+      <div class="chart-modal-header">
+        <div id="chart-modal-title" class="chart-modal-title">图表详情</div>
+        <button id="chart-modal-close" class="chart-modal-close">×</button>
+      </div>
+      <div class="chart-modal-content">
+        <div id="chart-modal-inner" class="chart-modal-inner"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 地图放大 Modal -->
+  <div id="map-modal" class="chart-modal">
+    <div class="chart-modal-overlay"></div>
+    <div class="chart-modal-dialog">
+      <div class="chart-modal-header">
+        <div class="chart-modal-title">值班经理位置 · 地图</div>
+        <button id="map-modal-close" class="chart-modal-close">×</button>
+      </div>
+      <div class="chart-modal-content">
+        <iframe id="map-modal-iframe" class="map-modal-iframe" src="" loading="lazy"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const departments = [
+      "综合管理室",
+      "经营管理室",
+      "质量安全室",
+      "运行控制室",
+      "国际客运室",
+      "国内客运室",
+      "中转服务室",
+      "机务工程室",
+      "站坪保障室",
+      "车辆维修室",
+      "襄阳分公司"
+    ];
+    const deptCoverageRates = [98.5, 97.3, 97.0, 95.1, 99.2, 84.9, 82.1, 89.7, 92.4, 86.4, 88.3];
+
+    const chartInstances = {};
+    let modalChart = null;
+
+    function createChart(domId, option) {
+      const el = document.getElementById(domId);
+      if (!el) return;
+      const chart = echarts.init(el);
+      chart.setOption(option);
+      chartInstances[domId] = chart;
+    }
+
+    function initMonthlyTrendChart() {
+      const months = ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
+      const totalTrainings = [220,230,245,260,280,290,305,320,310,295,285,270];
+      const companyTrainings = [70,75,80,82,90,95,100,105,102,96,93,92];
+      const deptTrainings = totalTrainings.map((v,i)=>v-companyTrainings[i]);
+
+      const option = {
+        tooltip:{ trigger:"axis" },
+        legend:{
+          data:["总培训次数","公司级培训","部门级培训"],
+          textStyle:{ color:"#e5e7eb" }
+        },
+        grid:{ left:"3%",right:"3%",bottom:"5%",top:"20%",containLabel:true },
+        xAxis:{
+          type:"category",
+          data:months,
+          axisLine:{ lineStyle:{ color:"#4b5563" }},
+          axisLabel:{ color:"#9ca3af" }
+        },
+        yAxis:{
+          type:"value",
+          axisLine:{ lineStyle:{ color:"#4b5563" }},
+          splitLine:{ lineStyle:{ color:"rgba(55,65,81,0.7)" }},
+          axisLabel:{ color:"#9ca3af" }
+        },
+        series:[
+          {
+            name:"公司级培训",
+            type:"bar",
+            stack:"totalBars",
+            data:companyTrainings,
+            barWidth:12,
+            itemStyle:{ color:"#38bdf8" }
+          },
+          {
+            name:"部门级培训",
+            type:"bar",
+            stack:"totalBars",
+            data:deptTrainings,
+            barWidth:12,
+            itemStyle:{ color:"#a855f7" }
+          },
+          {
+            name:"总培训次数",
+            type:"line",
+            data:totalTrainings,
+            smooth:true,
+            symbolSize:6,
+            itemStyle:{ color:"#facc15" }
+          }
+        ]
+      };
+      createChart("chart-monthly-trend", option);
+    }
+
+    function initDeptCoverageChart() {
+      const option = {
+        tooltip:{
+          trigger:"axis",
+          formatter:params=>{
+            const p=params[0];
+            return `${p.name}<br/>覆盖率：${p.value.toFixed(1)}%`;
+          }
+        },
+        grid:{ left:"24%",right:"4%",bottom:"5%",top:"6%",containLabel:true },
+        xAxis:{
+          type:"value",
+          min:70,
+          max:100,
+          axisLabel:{ formatter:v=>v+"%", color:"#9ca3af" },
+          axisLine:{ lineStyle:{ color:"#4b5563" }},
+          splitLine:{ lineStyle:{ color:"rgba(55,65,81,0.7)" }}
+        },
+        yAxis:{
+          type:"category",
+          data:departments,
+          axisLabel:{ color:"#9ca3af" },
+          axisLine:{ lineStyle:{ color:"#4b5563" }}
+        },
+        series:[{
+          type:"bar",
+          data:deptCoverageRates,
+          barWidth:10,
+          itemStyle:{
+            color:params=>{
+              const v=params.value;
+              if(v>=95) return "#22c55e";
+              if(v>=90) return "#38bdf8";
+              return "#fb923c";
+            }
+          },
+          label:{
+            show:true,
+            position:"right",
+            color:"#e5e7eb",
+            formatter:"{c}%"
+          }
+        }]
+      };
+      createChart("chart-dept-coverage", option);
+    }
+
+    function initSpecialTrainingChart() {
+      const categories=[
+        "危险品培训","上岗证培训","安保培训","航站楼准入","飞行区准入","服务礼仪培训"
+      ];
+      const counts=[210,180,190,165,140,101];
+
+      const option={
+        tooltip:{ trigger:"axis" },
+        grid:{ left:"6%",right:"3%",bottom:"8%",top:"10%",containLabel:true },
+        xAxis:{
+          type:"category",
+          data:categories,
+          axisLabel:{ color:"#9ca3af",interval:0,rotate:18 },
+          axisLine:{ lineStyle:{ color:"#4b5563" }}
+        },
+        yAxis:{
+          type:"value",
+          axisLine:{ lineStyle:{ color:"#4b5563" }},
+          splitLine:{ lineStyle:{ color:"rgba(55,65,81,0.7)" }},
+          axisLabel:{ color:"#9ca3af" }
+        },
+        series:[{
+          data:counts,
+          type:"bar",
+          barWidth:16,
+          itemStyle:{
+            color:new echarts.graphic.LinearGradient(0,0,0,1,[
+              {offset:0,color:"#38bdf8"},
+              {offset:1,color:"#020617"}
+            ])
+          },
+          label:{ show:true,position:"top",color:"#e5e7eb" }
+        }]
+      };
+      createChart("chart-special-training", option);
+    }
+
+    function initCompletionStatusChart() {
+      const types=["公司级培训","部门级培训","专项培训"];
+      const finished=[860,780,640];
+      const inProgress=[60,90,120];
+      const notStarted=[8,33,48];
+
+      const option={
+        tooltip:{ trigger:"axis",axisPointer:{ type:"shadow" }},
+        legend:{
+          data:["已完成","进行中","未启动"],
+          textStyle:{ color:"#e5e7eb" }
+        },
+        grid:{ left:"5%",right:"4%",bottom:"5%",top:"20%",containLabel:true },
+        xAxis:{
+          type:"category",
+          data:types,
+          axisLine:{ lineStyle:{ color:"#4b5563" }},
+          axisLabel:{ color:"#9ca3af" }
+        },
+        yAxis:{
+          type:"value",
+          axisLine:{ lineStyle:{ color:"#4b5563" }},
+          splitLine:{ lineStyle:{ color:"rgba(55,65,81,0.7)" }},
+          axisLabel:{ color:"#9ca3af" }
+        },
+        series:[
+          { name:"已完成", type:"bar", stack:"total", barWidth:18, data:finished,
+            itemStyle:{ color:"#22c55e" } },
+          { name:"进行中", type:"bar", stack:"total", barWidth:18, data:inProgress,
+            itemStyle:{ color:"#0ea5e9" } },
+          { name:"未启动", type:"bar", stack:"total", barWidth:18, data:notStarted,
+            itemStyle:{ color:"#64748b" } }
+        ]
+      };
+      createChart("chart-completion-status", option);
+    }
+
+    function initResourceDistributionChart() {
+      const data=[
+        { name:"内部讲师", value:38 },
+        { name:"外部讲师", value:12 },
+        { name:"线上课程资源", value:26 },
+        { name:"实训场地", value:14 },
+        { name:"仿真设备", value:10 }
+      ];
+      const option={
+        tooltip:{ trigger:"item", formatter:"{b}<br/>占比：{d}%" },
+        legend:{
+          orient:"vertical",
+          right:10,
+          top:"center",
+          textStyle:{ color:"#e5e7eb" }
+        },
+        series:[{
+          type:"pie",
+          radius:["40%","70%"],
+          center:["32%","50%"],
+          avoidLabelOverlap:false,
+          itemStyle:{ borderRadius:6,borderColor:"#020617",borderWidth:2 },
+          label:{ show:true,color:"#e5e7eb",formatter:"{b}\n{d}%" },
+          labelLine:{ show:true },
+          data
+        }]
+      };
+      createChart("chart-resource-distribution", option);
+    }
+
+    function initRadarChart() {
+      const indicator=[
+        { name:"危险品培训",max:100 },
+        { name:"安保培训",max:100 },
+        { name:"上岗证培训",max:100 },
+        { name:"航站楼准入",max:100 },
+        { name:"飞行区准入",max:100 },
+        { name:"服务礼仪培训",max:100 }
+      ];
+      const option={
+        tooltip:{},
+        legend:{
+          data:["国际客运室","国内客运室","运行控制室"],
+          textStyle:{ color:"#e5e7eb" }
+        },
+        radar:{
+          indicator,
+          axisName:{ color:"#9ca3af" },
+          splitLine:{ lineStyle:{ color:"rgba(55,65,81,0.8)" }},
+          splitArea:{ areaStyle:{ color:["rgba(15,23,42,0.7)","rgba(15,23,42,0.4)"] }},
+          axisLine:{ lineStyle:{ color:"rgba(55,65,81,0.8)" }}
+        },
+        series:[{
+          type:"radar",
+          data:[
+            {
+              name:"国际客运室",
+              value:[96,94,92,95,88,90],
+              areaStyle:{ color:"rgba(56,189,248,0.35)" },
+              lineStyle:{ color:"#38bdf8" }
+            },
+            {
+              name:"国内客运室",
+              value:[85,82,88,80,76,84],
+              areaStyle:{ color:"rgba(99,102,241,0.28)" },
+              lineStyle:{ color:"#6366f1" }
+            },
+            {
+              name:"运行控制室",
+              value:[92,90,94,91,95,87],
+              areaStyle:{ color:"rgba(250,204,21,0.25)" },
+              lineStyle:{ color:"#facc15" }
+            }
+          ]
+        }]
+      };
+      createChart("chart-radar", option);
+    }
+
+    // 甘特图：年度重点培训项目
+    function initGanttChart() {
+      const categories = [
+        "新入职及安全服务培训（22 批 / 11550 人次）",
+        "上岗证到期员工复审（573 人）",
+        "危险品初训及复训（211 人）"
+      ];
+      const data = [
+        // [任务索引, 开始月份, 结束月份]
+        [0, 1, 12],  // 全年
+        [1, 3, 11],  // 3-11 月
+        [2, 3, 11]   // 3-11 月
+      ];
+      const colors = ["#38bdf8", "#facc15", "#a855f7"];
+
+      const option = {
+        tooltip: {
+          formatter: params => {
+            const item = params.data;
+            const start = item[1];
+            const end = item[2];
+            return `${categories[item[0]]}<br/>时间：${start} 月 - ${end} 月`;
+          }
+        },
+        grid: { left: "10%", right: "4%", top: "12%", bottom: "10%" },
+        xAxis: {
+          type: "value",
+          min: 1,
+          max: 12,
+          axisLine: { lineStyle: { color: "#4b5563" } },
+          splitLine: { lineStyle: { color: "rgba(55,65,81,0.7)" } },
+          axisLabel: {
+            color: "#9ca3af",
+            formatter: v => v + "月"
+          }
+        },
+        yAxis: {
+          type: "category",
+          data: categories,
+          axisLine: { lineStyle: { color: "#4b5563" } },
+          axisLabel: { color: "#9ca3af" }
+        },
+        series: [
+          {
+            type: "custom",
+            renderItem: function (params, api) {
+              const categoryIndex = api.value(0);
+              const start = api.coord([api.value(1), categoryIndex]);
+              const end = api.coord([api.value(2), categoryIndex]);
+              const height = api.size([0, 1])[1] * 0.6;
+              return {
+                type: "rect",
+                shape: {
+                  x: start[0],
+                  y: start[1] - height / 2,
+                  width: end[0] - start[0],
+                  height: height
+                },
+                style: {
+                  fill: colors[categoryIndex],
+                  opacity: 0.9
+                }
+              };
+            },
+            encode: { x: [1, 2], y: 0 },
+            data: data
+          }
+        ]
+      };
+      createChart("chart-gantt", option);
+    }
+
+    // 图表放大 Modal
+    function openChartModal(chartId,title){
+      const modal=document.getElementById("chart-modal");
+      const titleEl=document.getElementById("chart-modal-title");
+      const inner=document.getElementById("chart-modal-inner");
+
+      modal.classList.add("active");
+      titleEl.textContent=title||"图表详情";
+
+      inner.innerHTML="";
+      const bigDiv=document.createElement("div");
+      bigDiv.style.width="100%";
+      bigDiv.style.height="100%";
+      inner.appendChild(bigDiv);
+
+      modalChart=echarts.init(bigDiv);
+      const sourceChart=chartInstances[chartId];
+      if(sourceChart){
+        const option=sourceChart.getOption();
+        modalChart.setOption(option,true);
+      }
+      window.addEventListener("resize",handleModalResize);
+    }
+
+    function closeChartModal(){
+      const modal=document.getElementById("chart-modal");
+      modal.classList.remove("active");
+      if(modalChart){
+        modalChart.dispose();
+        modalChart=null;
+      }
+      window.removeEventListener("resize",handleModalResize);
+    }
+
+    function handleModalResize(){
+      if(modalChart) modalChart.resize();
+    }
+
+    function bindZoomButtons(){
+      const buttons=document.querySelectorAll(".btn-zoom");
+      buttons.forEach(btn=>{
+        btn.addEventListener("click",()=>{
+          const id=btn.getAttribute("data-chart-id");
+          const title=btn.getAttribute("data-chart-title");
+          openChartModal(id,title);
+        });
+      });
+      const modalClose=document.getElementById("chart-modal-close");
+      const modalOverlay=document.querySelector("#chart-modal .chart-modal-overlay");
+      modalClose.addEventListener("click",closeChartModal);
+      modalOverlay.addEventListener("click",closeChartModal);
+    }
+
+    function resizeAllCharts(){
+      Object.values(chartInstances).forEach(c=>c && c.resize());
+    }
+
+    // 在线学员
+    function initOnlineLearnerCounter(){
+      const el=document.getElementById("online-counter");
+      if(!el) return;
+      let current=263;
+      const minVal=220,maxVal=320;
+      let animTimer=null;
+
+      function animateTo(target,duration){
+        if(animTimer){ clearInterval(animTimer); animTimer=null; }
+        const start=current;
+        const diff=target-start;
+        if(diff===0) return;
+        const steps=Math.max(12,Math.floor(duration/35));
+        let step=0;
+        el.classList.add("online-pulse");
+        animTimer=setInterval(()=>{
+          step++;
+          const progress=step/steps;
+          const value=Math.round(start+diff*progress);
+          el.textContent=value;
+          if(step>=steps){
+            clearInterval(animTimer);
+            animTimer=null;
+            current=target;
+            el.textContent=target;
+            setTimeout(()=>el.classList.remove("online-pulse"),200);
+          }
+        },duration/steps);
+      }
+
+      function scheduleNextUpdate(){
+        const delay=7000+Math.random()*4000;
+        setTimeout(()=>{
+          const delta=Math.floor(Math.random()*15)-7;
+          let next=current+delta;
+          if(next<minVal) next=minVal+Math.floor(Math.random()*5);
+          if(next>maxVal) next=maxVal-Math.floor(Math.random()*5);
+          animateTo(next,500+Math.random()*300);
+          scheduleNextUpdate();
+        },delay);
+      }
+
+      el.textContent=current;
+      scheduleNextUpdate();
+    }
+
+    // 时钟
+    function initHeaderClock(){
+      const el=document.getElementById("clock-time");
+      if(!el) return;
+      const weekdays=["日","一","二","三","四","五","六"];
+      const pad=n=>n<10?"0"+n:String(n);
+
+      function tick(){
+        const now=new Date();
+        const year=now.getFullYear();
+        const month=pad(now.getMonth()+1);
+        const day=pad(now.getDate());
+        const week=weekdays[now.getDay()];
+        const h=pad(now.getHours());
+        const m=pad(now.getMinutes());
+        const s=pad(now.getSeconds());
+        el.textContent=`${year}-${month}-${day} 周${week} ${h}:${m}:${s}`;
+      }
+      tick();
+      setInterval(tick,1000);
+    }
+
+    // 培训实施滚动
+    function initTrainingLogScroll(){
+      const list=document.getElementById("training-log");
+      if(!list) return;
+      list.addEventListener("click",e=>{
+        const item=e.target.closest(".training-log-item");
+        if(!item) return;
+        item.classList.toggle("expanded");
+      });
+
+      function scrollOnce(){
+        const first=list.children[0];
+        if(!first) return;
+        const h=first.offsetHeight;
+        list.style.transition="transform 0.45s ease-out";
+        list.style.transform=`translateY(-${h}px)`;
+        setTimeout(()=>{
+          list.style.transition="none";
+          list.appendChild(first);
+          list.style.transform="translateY(0)";
+        },460);
+      }
+      setInterval(scrollOnce,4000);
+    }
+
+    // 值班经理数据
+    const dutyManagers=[
+      {
+        level:"机场值班",
+        post:"机场一号",
+        name:"乔汉林",
+        phone:"13707102777",
+        shift:"08:00 - 次日 08:00",
+        location:"武汉天河机场 T3 综合值班室",
+        coord:"114.2099,30.7765",
+        label:"机场一号值班室"
+      },
+      {
+        level:"公司值班",
+        post:"地服值班",
+        name:"陈湘",
+        phone:"13971671299",
+        shift:"08:00 - 次日 08:00",
+        location:"地服公司办公室",
+        coord:"114.2099,30.7765",
+        label:"地服公司值班室"
+      },
+      {
+        level:"公司值班",
+        post:"机坪值班",
+        name:"李俊",
+        phone:"18674077966",
+        shift:"08:00 - 次日 08:00",
+        location:"机坪运行控制区值班室",
+        coord:"114.2099,30.7765",
+        label:"机坪值班室"
+      },
+      {
+        level:"公司值班",
+        post:"楼内值班",
+        name:"范菱",
+        phone:"18971278059",
+        shift:"08:00 - 次日 08:00",
+        location:"航站楼楼内值班室",
+        coord:"114.2099,30.7765",
+        label:"楼内值班室"
+      },
+      {
+        level:"部门值班",
+        post:"运行控制室",
+        name:"李俊",
+        phone:"18674077966",
+        shift:"08:00 - 次日 08:00",
+        location:"运行控制室值班席位",
+        coord:"114.2099,30.7765",
+        label:"运行控制室值班"
+      },
+      {
+        level:"部门值班",
+        post:"国内客运室",
+        name:"熊思凡",
+        phone:"15994297422",
+        shift:"08:00 - 次日 08:00",
+        location:"国内值机岛值班点",
+        coord:"114.2099,30.7765",
+        label:"国内客运室值班"
+      },
+      {
+        level:"部门值班",
+        post:"国际客运室",
+        name:"范菱",
+        phone:"18971278059",
+        shift:"08:00 - 次日 08:00",
+        location:"国际出发区值班点",
+        coord:"114.2099,30.7765",
+        label:"国际客运室值班"
+      },
+      {
+        level:"部门值班",
+        post:"中转服务室",
+        name:"马力",
+        phone:"13971593135",
+        shift:"08:00 - 次日 08:00",
+        location:"中转服务柜台",
+        coord:"114.2099,30.7765",
+        label:"中转服务室值班"
+      },
+      {
+        level:"部门值班",
+        post:"机务工程室",
+        name:"胡治平",
+        phone:"15927365150",
+        shift:"08:00 - 次日 08:00",
+        location:"机务一号机库",
+        coord:"114.2099,30.7765",
+        label:"机务工程室值班"
+      },
+      {
+        level:"部门值班",
+        post:"站坪保障室",
+        name:"王铭",
+        phone:"13797057525",
+        shift:"08:00 - 次日 08:00",
+        location:"站坪值班室",
+        coord:"114.2099,30.7765",
+        label:"站坪保障室值班"
+      },
+      {
+        level:"部门值班",
+        post:"车辆维修室",
+        name:"胡长军",
+        phone:"13995562283",
+        shift:"08:00 - 次日 08:00",
+        location:"车辆维修区值班点",
+        coord:"114.2099,30.7765",
+        label:"车辆维修室值班"
+      },
+      {
+        level:"外站值班",
+        post:"襄阳分公司",
+        name:"李卓君",
+        phone:"15072273536",
+        shift:"08:00 - 次日 08:00",
+        location:"襄阳机场地服部值班室",
+        coord:"112.7840,32.1500",
+        label:"襄阳分公司值班室"
+      }
+    ];
+
+    function setDutyManager(index){
+      const data=dutyManagers[index];
+      if(!data) return;
+      const levelEl=document.getElementById("duty-level");
+      const postEl=document.getElementById("duty-post");
+      const nameEl=document.getElementById("duty-name");
+      const phoneEl=document.getElementById("duty-phone");
+      const shiftEl=document.getElementById("duty-shift");
+      const locEl=document.getElementById("duty-location");
+      const checkinEl=document.getElementById("duty-checkin-text");
+      const mapIframe=document.getElementById("duty-map-iframe");
+      const coordEl=document.getElementById("duty-map-coord");
+      const refreshEl=document.getElementById("duty-map-refresh");
+      if(!levelEl||!postEl||!nameEl||!phoneEl||!shiftEl||!locEl||!checkinEl||!mapIframe||!coordEl||!refreshEl) return;
+
+      levelEl.textContent=data.level;
+      postEl.textContent=data.post;
+      nameEl.textContent=data.name;
+      phoneEl.textContent=data.phone;
+      shiftEl.textContent=data.shift;
+      locEl.textContent=data.location;
+      checkinEl.textContent="已打卡 · 08:05";
+
+      const srcLabel=encodeURIComponent("湖北机场集团 · "+data.label);
+      const src=`https://uri.amap.com/marker?position=${data.coord}&name=${srcLabel}&coordinate=gaode&callnative=0`;
+      mapIframe.src=src;
+
+      const [lng,lat]=data.coord.split(",");
+      coordEl.textContent=`坐标：N ${parseFloat(lat).toFixed(4)}° · E ${parseFloat(lng).toFixed(4)}°`;
+      refreshEl.textContent="定位更新：刚刚";
+
+      const cards=document.querySelectorAll(".duty-card");
+      cards.forEach(card=>{
+        const idx=Number(card.getAttribute("data-duty-index"));
+        if(idx===index) card.classList.add("duty-card-active");
+        else card.classList.remove("duty-card-active");
+      });
+    }
+
+    function initDutyCards(){
+      const cards=document.querySelectorAll(".duty-card");
+      if(!cards.length) return;
+      cards.forEach(card=>{
+        card.addEventListener("click",()=>{
+          const idx=Number(card.getAttribute("data-duty-index"));
+          setDutyManager(idx);
+        });
+      });
+      setDutyManager(0);
+    }
+
+    // 地图放大 Modal
+    function initMapModal(){
+      const mapContainer=document.getElementById("duty-map");
+      const smallIframe=document.getElementById("duty-map-iframe");
+      const modal=document.getElementById("map-modal");
+      const bigIframe=document.getElementById("map-modal-iframe");
+      const closeBtn=document.getElementById("map-modal-close");
+      const overlay=document.querySelector("#map-modal .chart-modal-overlay");
+      if(!mapContainer||!smallIframe||!modal||!bigIframe||!closeBtn||!overlay) return;
+
+      function openMap(){
+        bigIframe.src=smallIframe.src;
+        modal.classList.add("active");
+      }
+      function closeMap(){
+        modal.classList.remove("active");
+      }
+      mapContainer.addEventListener("click",openMap);
+      closeBtn.addEventListener("click",closeMap);
+      overlay.addEventListener("click",closeMap);
+    }
+
+    window.addEventListener("DOMContentLoaded",()=>{
+      initMonthlyTrendChart();
+      initDeptCoverageChart();
+      initSpecialTrainingChart();
+      initCompletionStatusChart();
+      initResourceDistributionChart();
+      initRadarChart();
+      initGanttChart();
+      bindZoomButtons();
+      initOnlineLearnerCounter();
+      initHeaderClock();
+      initTrainingLogScroll();
+      initDutyCards();
+      initMapModal();
+      window.addEventListener("resize",resizeAllCharts);
+    });
+  </script>
+</body>
+</html>

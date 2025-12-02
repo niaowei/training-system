@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>地服公司 · 培训管理智慧看板导航</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg-start: #020617;
+      --bg-mid: #020617;
+      --bg-end: #000000;
+      --accent: #38bdf8;
+      --accent-2: #6366f1;
+      --accent-3: #f97316;
+      --text-main: #e5e7eb;
+      --text-muted: #9ca3af;
+      --card-bg: rgba(15, 23, 42, 0.92);
+      --card-border: rgba(56, 189, 248, 0.6);
+      --glass-bg: rgba(15, 23, 42, 0.55);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+        Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+      min-height: 100vh;
+      color: var(--text-main);
+      background:
+        radial-gradient(circle at top, #0b1120 0, #020617 50%, #000 100%);
+      overflow: hidden;
+    }
+
+    /* 背景动态网格 + 光晕 */
+    .bg-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: -2;
+      background-image:
+        linear-gradient(rgba(15, 23, 42, 0.6) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(15, 23, 42, 0.6) 1px, transparent 1px);
+      background-size: 40px 40px;
+      opacity: 0.4;
+      animation: grid-move 40s linear infinite;
+    }
+
+    .bg-glow {
+      position: fixed;
+      inset: -20%;
+      pointer-events: none;
+      z-index: -1;
+      background:
+        radial-gradient(circle at 20% 10%, rgba(56, 189, 248, 0.18), transparent 55%),
+        radial-gradient(circle at 80% 80%, rgba(99, 102, 241, 0.22), transparent 55%),
+        radial-gradient(circle at 10% 80%, rgba(248, 113, 113, 0.16), transparent 55%);
+      mix-blend-mode: screen;
+      filter: blur(2px);
+    }
+
+    @keyframes grid-move {
+      0% {
+        transform: translate3d(0, 0, 0);
+      }
+      100% {
+        transform: translate3d(-80px, -80px, 0);
+      }
+    }
+
+    .page {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 18px 16px 24px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 顶部栏 */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .logo-block {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-mark {
+      width: 38px;
+      height: 38px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 20%, #e5e7eb, #38bdf8);
+      box-shadow:
+        0 0 0 1px rgba(148, 163, 184, 0.6),
+        0 0 18px rgba(56, 189, 248, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #020617;
+      font-weight: 700;
+      font-size: 18px;
+    }
+
+    .title-wrap h1 {
+      font-size: 20px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .title-wrap p {
+      margin-top: 2px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .header-right {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: flex-end;
+      align-items: center;
+    }
+
+    .pill {
+      font-size: 11px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      background: rgba(15, 23, 42, 0.9);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--text-muted);
+      backdrop-filter: blur(10px);
+    }
+
+    .pill span {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .clock-pill {
+      border-color: rgba(56, 189, 248, 0.9);
+      box-shadow:
+        0 0 14px rgba(56, 189, 248, 0.7),
+        0 0 35px rgba(15, 23, 42, 0.9);
+      animation: breathe 4s ease-in-out infinite;
+    }
+
+    .clock-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.9);
+      animation: ping 1.6s cubic-bezier(0.36, 0, 0.66, -0.56) infinite;
+    }
+
+    .clock-time {
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.06em;
+      color: var(--text-main);
+    }
+
+    @keyframes breathe {
+      0%, 100% {
+        box-shadow:
+          0 0 12px rgba(56, 189, 248, 0.4),
+          0 0 28px rgba(15, 23, 42, 0.9);
+      }
+      50% {
+        box-shadow:
+          0 0 20px rgba(56, 189, 248, 0.8),
+          0 0 40px rgba(15, 23, 42, 0.95);
+      }
+    }
+
+    @keyframes ping {
+      0% { transform: scale(1); opacity: 1; }
+      80%,100% { transform: scale(1.5); opacity: 0; }
+    }
+
+    /* 主体布局 */
+    .main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.1fr 1.4fr;
+      gap: 18px;
+      margin-top: 8px;
+      align-items: center;
+    }
+
+    @media (max-width: 960px) {
+      .main {
+        grid-template-columns: 1fr;
+        align-items: stretch;
+      }
+    }
+
+    /* 左侧说明 + 按钮 */
+    .intro {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .intro-title {
+      font-size: 24px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+    }
+
+    .intro-title span {
+      background: linear-gradient(120deg, #38bdf8, #a855f7, #f97316);
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+
+    .intro-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .soft-badge {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(56, 189, 248, 0.5);
+      background: rgba(15, 23, 42, 0.85);
+      color: #bae6fd;
+    }
+
+    .soft-badge.hot {
+      border-color: rgba(248, 113, 113, 0.9);
+      color: #fecaca;
+      background: rgba(248, 113, 113, 0.12);
+      animation: latestPulse 1.6s ease-in-out infinite;
+    }
+
+    @keyframes latestPulse {
+      0% {
+        transform: scale(1);
+        box-shadow: 0 0 4px rgba(248, 113, 113, 0.7);
+      }
+      50% {
+        transform: scale(1.06);
+        box-shadow: 0 0 10px rgba(248, 113, 113, 1);
+      }
+      100% {
+        transform: scale(1);
+        box-shadow: 0 0 4px rgba(248, 113, 113, 0.7);
+      }
+    }
+
+    .quick-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .link-chip {
+      font-size: 12px;
+      padding: 6px 11px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      color: var(--text-muted);
+      cursor: pointer;
+      background: rgba(15, 23, 42, 0.88);
+      transition: all 0.18s ease-out;
+    }
+
+    .link-chip:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
+      transform: translateY(-1px);
+    }
+
+    .footer-note {
+      margin-top: 10px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* 右侧导航卡片区域 */
+    .nav-panel {
+      position: relative;
+      padding: 16px;
+      border-radius: 18px;
+      background: linear-gradient(145deg, rgba(15, 23, 42, 0.96), rgba(2, 6, 23, 0.96));
+      border: 1px solid rgba(56, 189, 248, 0.6);
+      box-shadow:
+        0 20px 60px rgba(15, 23, 42, 0.95),
+        0 0 0 1px rgba(15, 23, 42, 0.8);
+      overflow: hidden;
+    }
+
+    .nav-panel::before {
+      content: "";
+      position: absolute;
+      inset: -40%;
+      background:
+        radial-gradient(circle at 15% 0%, rgba(56, 189, 248, 0.18), transparent 55%),
+        radial-gradient(circle at 85% 100%, rgba(251, 146, 60, 0.18), transparent 55%);
+      opacity: 0.8;
+      pointer-events: none;
+    }
+
+    .orbit-ring {
+      position: absolute;
+      inset: 4%;
+      border-radius: 999px;
+      border: 1px dashed rgba(148, 163, 184, 0.35);
+      pointer-events: none;
+    }
+
+    .planet-core {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 130px;
+      height: 130px;
+      border-radius: 999px;
+      transform: translate(-50%, -50%);
+      background:
+        radial-gradient(circle at 30% 20%, #f5f5f5, #38bdf8 45%, #0f172a 70%);
+      box-shadow:
+        0 0 0 1px rgba(15, 23, 42, 0.9),
+        0 0 40px rgba(56, 189, 248, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: 11px;
+      color: #020617;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      animation: float 7s ease-in-out infinite;
+      z-index: 1;
+    }
+
+    .planet-core span {
+      display: block;
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      opacity: 0.8;
+      margin-top: 4px;
+    }
+
+    @keyframes float {
+      0%, 100% {
+        transform: translate(-50%, -52%);
+      }
+      50% {
+        transform: translate(-50%, -48%);
+      }
+    }
+
+    .nav-grid {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    @media (max-width: 960px) {
+      .nav-grid {
+        grid-template-columns: 1fr;
+      }
+      .planet-core, .orbit-ring {
+        opacity: 0.22;
+      }
+    }
+
+    .nav-card {
+      position: relative;
+      padding: 11px 12px;
+      border-radius: 14px;
+      background: var(--glass-bg);
+      border: 1px solid rgba(148, 163, 184, 0.75);
+      box-shadow:
+        0 14px 32px rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(16px);
+      cursor: pointer;
+      overflow: hidden;
+      transform-style: preserve-3d;
+      transition: transform 0.18s ease-out, box-shadow 0.18s ease-out, border-color 0.2s;
+    }
+
+    .nav-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.28), transparent 55%);
+      opacity: 0;
+      transition: opacity 0.2s ease-out;
+      pointer-events: none;
+    }
+
+    .nav-card.main {
+      grid-column: span 2;
+    }
+
+    @media (max-width: 960px) {
+      .nav-card.main {
+        grid-column: span 1;
+      }
+    }
+
+    .nav-card:hover {
+      transform: translateY(-4px) scale(1.01);
+      border-color: var(--accent);
+      box-shadow:
+        0 20px 50px rgba(15, 23, 42, 0.98),
+        0 0 25px rgba(56, 189, 248, 0.55);
+    }
+
+    .nav-card:hover::before {
+      opacity: 1;
+    }
+
+    .nav-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .nav-tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 4px;
+      font-size: 10px;
+    }
+
+    .nav-tag {
+      padding: 2px 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      color: var(--text-muted);
+      background: rgba(15, 23, 42, 0.9);
+    }
+
+    .nav-tag.primary {
+      border-color: rgba(56, 189, 248, 0.8);
+      color: #bae6fd;
+    }
+
+    .nav-tag.warn {
+      border-color: rgba(248, 113, 113, 0.9);
+      color: #fecaca;
+    }
+
+    .nav-title {
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .nav-title-icon {
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      border: 1px solid rgba(56, 189, 248, 0.9);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: var(--accent);
+      background: rgba(15, 23, 42, 0.9);
+    }
+
+    .nav-desc {
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .nav-footer {
+      margin-top: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .btn-enter {
+      border-radius: 999px;
+      border: 1px solid rgba(56, 189, 248, 0.9);
+      background: radial-gradient(circle at top, rgba(56, 189, 248, 0.24), rgba(15, 23, 42, 0.96));
+      color: var(--text-main);
+      font-size: 11px;
+      padding: 4px 9px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      text-decoration: none;
+      transition: all 0.15s ease-out;
+    }
+
+    .nav-card:hover .btn-enter {
+      background: linear-gradient(120deg, #38bdf8, #6366f1);
+      color: #020617;
+      box-shadow: 0 0 14px rgba(56, 189, 248, 0.9);
+      transform: translateY(-1px);
+    }
+
+    .btn-enter-arrow {
+      font-size: 13px;
+    }
+
+    .meta-label {
+      opacity: 0.8;
+    }
+
+    .meta-value {
+      color: #a5b4fc;
+    }
+
+    a.card-link {
+      color: inherit;
+      text-decoration: none;
+      display: block;
+    }
+
+    /* 底部 */
+    .bottom-bar {
+      margin-top: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: var(--text-muted);
+      opacity: 0.9;
+    }
+
+    @media (max-width: 640px) {
+      .header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .header-right {
+        justify-content: flex-start;
+      }
+      .bottom-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-layer"></div>
+  <div class="bg-glow"></div>
+
+  <div class="page">
+    <!-- 顶部 -->
+    <header class="header">
+      <div class="logo-block">
+        <div class="logo-mark">T</div>
+        <div class="title-wrap">
+          <h1>地服公司 · 培训管理智慧舱</h1>
+          <p>Training Intelligence Hub · 人–岗–证–训全链路可视化</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="pill clock-pill">
+          <div class="clock-dot"></div>
+          <div>
+            <div style="font-size: 10px; color: var(--text-muted);">系统时间 · 实时监控</div>
+            <div id="clock-time" class="clock-time">--:--:--</div>
+          </div>
+        </div>
+        <div class="pill">
+          当前环境：
+          <span>GitHub Pages · 静态部署</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="main">
+      <!-- 左侧文案 -->
+      <section class="intro">
+        <h2 class="intro-title">
+          一键进入 <span>三层训练驾驶舱</span>
+        </h2>
+        <p class="intro-desc">
+          这里是你整个培训项目的<span style="color:#bae6fd;">「首页中台」</span>：上方统一品牌风格，
+          右侧通过三张卡片分别进入
+          <strong>公司级总览看板</strong>、<strong>国际客运室部门看板</strong>和
+          <strong>员工级人岗证训看板</strong>。适合放在 GitHub 作为项目入口页面。
+        </p>
+        <div class="badge-row">
+          <span class="soft-badge hot">最新 · 玻璃拟物 + 霓虹科技风</span>
+          <span class="soft-badge">全屏布局 · 大屏展示友好</span>
+          <span class="soft-badge">支持鼠标悬浮 3D 动效</span>
+        </div>
+        <div class="quick-links">
+          <button type="button" class="link-chip" data-target="company">直接进入 · 公司级总览</button>
+          <button type="button" class="link-chip" data-target="dept">直接进入 · 国际客运室</button>
+          <button type="button" class="link-chip" data-target="staff">直接进入 · 员工级履历</button>
+        </div>
+        <p class="footer-note">
+          提示：三个看板页面文件默认命名为
+          <code>kanban3.html</code>、<code>看板7.html</code>、<code>kanban5.html</code>，与本页面放在同一目录即可。
+          如你后续修改文件名，只需要同步更新下面导航卡片里的链接即可。
+        </p>
+      </section>
+
+      <!-- 右侧导航卡片 -->
+      <section class="nav-panel">
+        <div class="orbit-ring"></div>
+        <div class="planet-core">
+          TRAINING HUB
+          <span>LEVEL 1 · 2 · 3</span>
+        </div>
+
+        <div class="nav-grid">
+          <!-- 公司级总览 -->
+          <article class="nav-card main" data-link="kanban3.html" id="card-company">
+            <a href="kanban3.html" class="card-link">
+              <div class="nav-header">
+                <div>
+                  <div class="nav-title">
+                    <div class="nav-title-icon">①</div>
+                    公司级 · 培训运行总览看板
+                  </div>
+                  <div class="nav-tag-row">
+                    <span class="nav-tag primary">年度培训 KPI 总览</span>
+                    <span class="nav-tag">月度趋势 · 部门覆盖率 · 预警 & 待办</span>
+                  </div>
+                </div>
+                <div class="btn-enter">
+                  进入看板
+                  <span class="btn-enter-arrow">⤴</span>
+                </div>
+              </div>
+              <p class="nav-desc">
+                统一展示公司级培训批次、人次、覆盖率、危险品/上岗证/准入等关键指标，
+                配合地图、值班经理信息与部门完成率排名，用于领导层快速掌握整体培训运行态势。
+              </p>
+              <div class="nav-footer">
+                <div class="meta-label">文件：<span class="meta-value">kanban3.html</span></div>
+                <div class="meta-label">适用人群：董事长 / 总经理 / 部门负责人</div>
+              </div>
+            </a>
+          </article>
+
+          <!-- 部门级 · 国际客运室 -->
+          <article class="nav-card" data-link="看板7.html" id="card-dept">
+            <a href="看板7.html" class="card-link">
+              <div class="nav-header">
+                <div>
+                  <div class="nav-title">
+                    <div class="nav-title-icon">②</div>
+                    部门级 · 国际客运室培训舱
+                  </div>
+                  <div class="nav-tag-row">
+                    <span class="nav-tag primary">分队 × 岗位 × 证书矩阵</span>
+                    <span class="nav-tag">资源效率 · 风险预警 · 业务特色</span>
+                  </div>
+                </div>
+                <div class="btn-enter">
+                  进入看板
+                  <span class="btn-enter-arrow">⤴</span>
+                </div>
+              </div>
+              <p class="nav-desc">
+                聚焦国际客运室，细化到值机/服务/行拣/行查各分队的培训完成率与证书合规率，
+                支持证书管理舱动态条播和部门业务特色滚动高亮，用于中层管理「一屏看清本部门」。
+              </p>
+              <div class="nav-footer">
+                <div class="meta-label">文件：<span class="meta-value">看板7.html</span></div>
+                <div class="meta-label">适用人群：部门经理 / 分队长</div>
+              </div>
+            </a>
+          </article>
+
+          <!-- 员工级 · 人岗证训全履历 -->
+          <article class="nav-card" data-link="kanban5.html" id="card-staff">
+            <a href="kanban5.html" class="card-link">
+              <div class="nav-header">
+                <div>
+                  <div class="nav-title">
+                    <div class="nav-title-icon">③</div>
+                    员工级 · 人–岗–证–训全履历
+                  </div>
+                  <div class="nav-tag-row">
+                    <span class="nav-tag primary">个人画像 · 培训 & 证书时间轴</span>
+                    <span class="nav-tag warn">支持从上级看板下钻</span>
+                  </div>
+                </div>
+                <div class="btn-enter">
+                  进入看板
+                  <span class="btn-enter-arrow">⤴</span>
+                </div>
+              </div>
+              <p class="nav-desc">
+                面向单一员工展示其入职以来的岗位变动、培训记录、证书持有与复审情况，
+                用于绩效评估、班组长谈话、现场抽查时的快速查询。可由一级/二级看板点击姓名下钻跳转。
+              </p>
+              <div class="nav-footer">
+                <div class="meta-label">文件：<span class="meta-value">kanban5.html</span></div>
+                <div class="meta-label">适用人群：班组长 / HR / 培训管理员</div>
+              </div>
+            </a>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="bottom-bar">
+      <div>© 2025 地服公司培训管理平台 · GitHub 静态大屏示例</div>
+      <div>提示：如需跳转新窗口，可在链接上加 <code>target="_blank"</code> 属性。</div>
+    </footer>
+  </div>
+
+  <script>
+    // 顶部时钟
+    (function initClock() {
+      const el = document.getElementById("clock-time");
+      if (!el) return;
+      const weekdays = ["日","一","二","三","四","五","六"];
+      const pad = n => (n < 10 ? "0" + n : "" + n);
+      function tick() {
+        const now = new Date();
+        const y = now.getFullYear();
+        const M = pad(now.getMonth() + 1);
+        const d = pad(now.getDate());
+        const w = weekdays[now.getDay()];
+        const h = pad(now.getHours());
+        const m = pad(now.getMinutes());
+        const s = pad(now.getSeconds());
+        el.textContent = `${y}-${M}-${d} 周${w} ${h}:${m}:${s}`;
+      }
+      tick();
+      setInterval(tick, 1000);
+    })();
+
+    // 快捷 chip 点击 -> 对应卡片链接
+    (function bindQuickLinks() {
+      const mapping = {
+        company: "card-company",
+        dept: "card-dept",
+        staff: "card-staff"
+      };
+      document.querySelectorAll(".link-chip").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const target = btn.getAttribute("data-target");
+          const cardId = mapping[target];
+          const card = document.getElementById(cardId);
+          if (!card) return;
+          const link = card.querySelector("a.card-link");
+          if (link) link.click();
+        });
+      });
+    })();
+
+    // 轻微 3D 跟随鼠标效果
+    (function addCardTilt() {
+      const cards = document.querySelectorAll(".nav-card");
+      cards.forEach(card => {
+        const strength = 10;
+        card.addEventListener("mousemove", e => {
+          const rect = card.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          const rx = ((y / rect.height) - 0.5) * -strength;
+          const ry = ((x / rect.width) - 0.5) * strength;
+          card.style.transform =
+            `perspective(700px) rotateX(${rx}deg) rotateY(${ry}deg) translateY(-3px)`;
+        });
+        card.addEventListener("mouseleave", () => {
+          card.style.transform = "";
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

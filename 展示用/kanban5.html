@@ -1,0 +1,1645 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>国际客运室 · 部门培训管理智慧舱</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Microsoft YaHei", system-ui, -apple-system, BlinkMacSystemFont;
+      background: radial-gradient(circle at top, #10355f 0, #050814 55%, #020309 100%);
+      color: #e6f1ff;
+      overflow: hidden;
+    }
+    .dashboard {
+      width: 100vw;
+      height: 100vh;
+      padding: 12px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 12px;
+      background: linear-gradient(90deg, rgba(0,102,204,0.3), rgba(0,0,0,0.4));
+      box-shadow: 0 0 12px rgba(0,153,255,0.35);
+    }
+    .title-block h1 {
+      font-size: 22px;
+      letter-spacing: 2px;
+    }
+    .title-block h2 {
+      font-size: 12px;
+      color: #8fb3ff;
+      margin-top: 2px;
+    }
+    .kpi-row {
+      display: flex;
+      gap: 10px;
+      align-items: stretch;
+    }
+    .kpi-card {
+      min-width: 130px;
+      padding: 6px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(135,206,250,0.4);
+      background: radial-gradient(circle at top, rgba(0,123,255,0.18), rgba(0,0,0,0.7));
+      box-shadow: 0 0 10px rgba(0,123,255,0.4);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .kpi-label { font-size: 11px; color: #9fb9ff; }
+    .kpi-value { font-size: 20px; font-weight: 700; margin-top: 3px; }
+    .kpi-sub { font-size: 11px; color: #7de1ff; margin-top: 2px; }
+
+    .badge {
+      display: inline-block;
+      padding: 1px 5px;
+      border-radius: 999px;
+      font-size: 11px;
+      margin-left: 4px;
+    }
+    .badge-green {
+      background: rgba(41, 204, 132, 0.2);
+      border: 1px solid rgba(41, 204, 132, 0.8);
+      color: #92ffcf;
+    }
+    .badge-yellow {
+      background: rgba(255, 208, 0, 0.15);
+      border: 1px solid rgba(255, 208, 0, 0.9);
+      color: #ffeaa7;
+    }
+    .badge-red {
+      background: rgba(255, 71, 87, 0.2);
+      border: 1px solid rgba(255, 71, 87, 0.9);
+      color: #ffbaba;
+    }
+
+    .btn-compliance {
+      margin-left: 8px;
+      padding: 5px 10px;
+      font-size: 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(120,200,255,0.9);
+      background: linear-gradient(120deg, #21a0ff, #34f3df);
+      color: #02101f;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(90,210,255,0.8);
+    }
+    .btn-compliance:hover { filter: brightness(1.1); }
+
+    main.layout {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.1fr 1.2fr 1.1fr;
+      grid-gap: 10px;
+      min-height: 0;
+    }
+    .column {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 0;
+    }
+    .panel {
+      position: relative;
+      border-radius: 12px;
+      background: radial-gradient(circle at top, rgba(9,60,120,0.45), rgba(3,12,26,0.95));
+      border: 1px solid rgba(82,156,255,0.6);
+      box-shadow: 0 0 20px rgba(0,140,255,0.45);
+      padding: 6px 9px 6px 9px;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 3px;
+    }
+    .panel-title {
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .panel-title::before {
+      content: "";
+      width: 4px;
+      height: 14px;
+      border-radius: 3px;
+      background: linear-gradient(180deg, #45c2ff, #007bff);
+    }
+
+    .time-switch {
+      display: inline-flex;
+      background: rgba(0,0,0,0.35);
+      border-radius: 999px;
+      padding: 2px;
+      gap: 2px;
+      border: 1px solid rgba(110,175,255,0.8);
+    }
+    .time-switch button {
+      border: none;
+      padding: 2px 7px;
+      font-size: 11px;
+      border-radius: 999px;
+      background: transparent;
+      color: #a8c5ff;
+      cursor: pointer;
+    }
+    .time-switch button.active {
+      background: linear-gradient(120deg, #409bff, #3bffd6);
+      color: #02101f;
+      font-weight: 600;
+      box-shadow: 0 0 8px rgba(132, 215, 255, 0.9);
+    }
+
+    .chart { flex: 1; min-height: 160px; }
+    .panel-small { height: 33%; }
+    .panel-mid   { height: 45%; }
+    .panel-large { height: 52%; }
+
+    .panel-list {
+      font-size: 12px;
+      overflow: auto;
+      margin-top: 4px;
+    }
+
+    .risk-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 6px;
+      border-radius: 8px;
+      margin-bottom: 4px;
+      background: linear-gradient(90deg, rgba(180, 31, 60, 0.35), rgba(60, 6, 23, 0.8));
+      border: 1px solid rgba(255, 109, 132, 0.8);
+    }
+    .risk-main { display: flex; flex-direction: column; }
+    .risk-type { font-size: 12px; font-weight: 600; color: #ffb3c1; }
+    .risk-detail { font-size: 11px; color: #ffdbe3; margin-top: 1px; }
+    .risk-tag {
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: linear-gradient(120deg, #ff5b73, #ffd166);
+      color: #3b020a;
+      cursor: pointer;
+    }
+
+    .ranking-list { margin-top: 4px; font-size: 12px; }
+    .rank-row { display: flex; flex-direction: column; margin-bottom: 4px; }
+    .rank-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 2px;
+    }
+    .rank-name  { font-size: 12px; font-weight: 600; }
+    .rank-value { font-size: 12px; color: #9fd9ff; }
+    .rank-bar {
+      position: relative;
+      width: 100%;
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(11, 35, 66, 0.8);
+      overflow: hidden;
+    }
+    .rank-bar-inner {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #27e49b, #23ecff);
+      box-shadow: 0 0 10px rgba(92, 244, 255, 0.85);
+      transition: width 0.8s ease;
+    }
+    .rank-bar-inner.mid {
+      background: linear-gradient(90deg, #ffd166, #ff9f1c);
+      box-shadow: 0 0 10px rgba(255, 209, 102, 0.85);
+    }
+    .rank-bar-inner.low {
+      background: linear-gradient(90deg, #ff6b6b, #c9184a);
+      box-shadow: 0 0 10px rgba(255, 107, 107, 0.9);
+    }
+    .rank-status {
+      font-size: 11px;
+      margin-top: 1px;
+      color: #ffbdbd;
+    }
+
+    /* 业务特色 & 证书滚动公用样式 */
+    .feature-ticker {
+      margin-top: 4px;
+      padding-top: 4px;
+      border-top: 1px solid rgba(100,150,230,0.5);
+      position: relative;
+      min-height: 36px;
+      font-size: 11px;
+      color: #9fb9ff;
+      overflow: hidden;
+    }
+    /* 单条轮播型（业务特色用） */
+    .feature-item {
+      position: absolute;
+      width: 100%;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity .4s ease, transform .4s ease;
+      line-height: 1.5;
+    }
+    .feature-item.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .feature-tags {
+      display: inline-flex;
+      gap: 4px;
+      margin-right: 6px;
+    }
+    .feature-tag {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(120,180,255,0.9);
+      background: rgba(20,40,80,0.9);
+      font-size: 10px;
+      color: #c4dcff;
+    }
+    .feature-tag-latest {
+      border-color: rgba(255,90,120,0.95);
+      background: rgba(255,90,120,0.18);
+      color: #ffb3c6;
+    }
+    .feature-main-text { font-size: 11px; }
+    .feature-date {
+      float: right;
+      font-size: 10px;
+      color: #7c8fb5;
+    }
+
+        /* 证书条播：多条往上滚动列表（一次展示多条 + 悬停暂停） */
+    #certTicker {
+      min-height: 60px;       /* 一次能看到多条记录 */
+      padding-top: 2px;
+    }
+    .cert-inner {
+      position: relative;
+      will-change: transform;
+    }
+    .cert-item {
+      display: flex;
+      align-items: baseline;
+      font-size: 11px;
+      padding: 3px 0;
+      cursor: pointer;
+    }
+    .cert-item + .cert-item {
+      border-top: 1px dashed rgba(90,140,210,0.4);
+    }
+    .cert-item:hover {
+      background: rgba(30,80,150,0.25);
+    }
+    .cert-badges {
+      display: inline-flex;
+      gap: 4px;
+      margin-right: 6px;
+      flex-shrink: 0;
+    }
+    .cert-date {
+      margin-left: auto;
+      font-size: 10px;
+      color: #7c8fb5;
+      flex-shrink: 0;
+      padding-left: 4px;
+    }
+
+    /* 给“最新”小红标加一个轻微呼吸动效 */
+    @keyframes latestPulse {
+      0% {
+        transform: scale(1);
+        box-shadow: 0 0 4px rgba(255,90,120,0.7);
+      }
+      50% {
+        transform: scale(1.08);
+        box-shadow: 0 0 10px rgba(255,90,120,1);
+      }
+      100% {
+        transform: scale(1);
+        box-shadow: 0 0 4px rgba(255,90,120,0.7);
+      }
+    }
+    .feature-tag-latest {
+      animation: latestPulse 1.6s infinite;
+    }
+
+    /* 详情弹窗（名单） */
+    .modal-mask {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+    }
+    .modal-mask.show { display: flex; }
+    .modal {
+      width: 70%;
+      max-height: 70%;
+      background: radial-gradient(circle at top, #12325f, #050814);
+      border-radius: 12px;
+      border: 1px solid rgba(132,186,255,0.9);
+      box-shadow: 0 0 25px rgba(0,180,255,0.9);
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .modal-title { font-size: 14px; font-weight: 600; }
+    .modal-close {
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      padding: 0 6px;
+      border-radius: 4px;
+      color: #9fb9ff;
+    }
+    .modal-close:hover {
+      background: rgba(255,255,255,0.08);
+      color: #ffffff;
+    }
+    .modal-body { overflow: auto; font-size: 12px; }
+
+    table.detail-table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+    table.detail-table thead { background: rgba(8,48,107,0.9); }
+    table.detail-table th,
+    table.detail-table td {
+      border: 1px solid rgba(64,118,196,0.7);
+      padding: 3px 6px;
+      text-align: left;
+      white-space: nowrap;
+    }
+    table.detail-table th { font-weight: 600; color: #c1dbff; }
+    table.detail-table tbody tr:nth-child(odd)  { background: rgba(6,25,55,0.85); }
+    table.detail-table tbody tr:nth-child(even) { background: rgba(3,17,39,0.85); }
+
+    /* 合规检查弹窗 */
+    .compliance-mask {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .compliance-mask.show { display: flex; }
+    .compliance-dialog {
+      width: 60%;
+      max-width: 900px;
+      background: radial-gradient(circle at top, #173a64, #061120);
+      border-radius: 16px;
+      border: 1px solid rgba(132,186,255,0.9);
+      box-shadow: 0 0 35px rgba(0,180,255,0.9);
+      padding: 16px 20px 16px 20px;
+      display: flex;
+      flex-direction: column;
+      color: #e6f1ff;
+    }
+    .compliance-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .compliance-title-main { font-size: 16px; font-weight: 600; }
+    .compliance-close {
+      cursor: pointer;
+      font-size: 20px;
+      padding: 0 6px;
+      border-radius: 4px;
+      color: #9fb9ff;
+    }
+    .compliance-close:hover {
+      background: rgba(255,255,255,0.1);
+      color: #ffffff;
+    }
+    .compliance-subtitle {
+      font-size: 13px;
+      color: #8fb3ff;
+      margin-bottom: 10px;
+    }
+    .compliance-cards {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .compliance-card {
+      flex: 1;
+      padding: 10px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(0,180,200,0.5), rgba(0,70,120,0.9));
+      box-shadow: 0 0 15px rgba(70,190,255,0.8);
+      text-align: center;
+    }
+    .compliance-card.mid {
+      background: linear-gradient(135deg, rgba(255,200,120,0.5), rgba(120,80,0,0.8));
+      box-shadow: 0 0 15px rgba(255,200,120,0.8);
+    }
+    .compliance-card.right {
+      background: linear-gradient(135deg, rgba(0,220,180,0.5), rgba(0,90,90,0.9));
+      box-shadow: 0 0 15px rgba(0,220,180,0.8);
+    }
+    .compliance-card-value {
+      font-size: 26px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .compliance-card-label { font-size: 13px; }
+
+    .compliance-block {
+      margin-top: 6px;
+      padding: 10px;
+      border-radius: 10px;
+      background: radial-gradient(circle at top, rgba(5,35,75,0.95), rgba(3,14,30,0.95));
+      border: 1px solid rgba(88,144,220,0.8);
+    }
+    .compliance-block h3 { font-size: 13px; margin-bottom: 5px; }
+    .compliance-list {
+      padding-left: 18px;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .compliance-list li { margin-bottom: 2px; }
+    .compliance-pending-title { color: #ffd46b; }
+    .compliance-btn-row { margin-top: 12px; text-align: center; }
+    .compliance-btn {
+      min-width: 180px;
+      padding: 8px 20px;
+      font-size: 13px;
+      border-radius: 999px;
+      border: 1px solid rgba(120,200,255,0.9);
+      background: linear-gradient(120deg, #21a0ff, #34f3df);
+      color: #02101f;
+      cursor: pointer;
+      box-shadow: 0 0 16px rgba(90,210,255,0.9);
+    }
+    .compliance-btn:hover { filter: brightness(1.1); }
+  </style>
+</head>
+<body>
+<div class="dashboard">
+  <!-- 顶部 -->
+  <header>
+    <div class="title-block">
+      <h1>国际客运室 · 部门培训管理智慧舱</h1>
+      <h2>数据日期：2025-12-01 · 单位：人 / 次</h2>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div class="kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-label">部门总人数</div>
+          <div class="kpi-value">103</div>
+          <div class="kpi-sub">办公室 8 · 值机 37 · 服务 31 · 行查 13 · 行拣 14</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">2025年累计培训总人数</div>
+          <div class="kpi-value" id="kpiTotalPersons">0</div>
+          <div class="kpi-sub">含各类专项培训去重统计</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">2025年累计培训总次数</div>
+          <div class="kpi-value" id="kpiTotalTimes">0</div>
+          <div class="kpi-sub">人次口径（部门级 + 岗位级）</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">部门培训覆盖率</div>
+          <div class="kpi-value" id="kpiCoverage">0%</div>
+          <div class="kpi-sub">对标公司平均覆盖率<span class="badge badge-green" id="kpiCompare">领先</span></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">当前风险预警</div>
+          <div class="kpi-value" id="kpiRiskCount">0</div>
+          <div class="kpi-sub">危险品 / 上岗证 / 安保 / 准入等关键项目</div>
+        </div>
+      </div>
+      <button class="btn-compliance" id="btnCompliance">合规检查</button>
+    </div>
+  </header>
+
+  <!-- 主体布局 -->
+  <main class="layout">
+    <!-- 左列：趋势 + 类型 + 资源效率进度图 -->
+    <div class="column">
+      <div class="panel panel-large">
+        <div class="panel-header">
+          <div class="panel-title">年度 / 季度 / 当月培训人数 & 次数趋势</div>
+          <div class="time-switch" data-target="trend">
+            <button data-mode="year" class="active">年</button>
+            <button data-mode="quarter">季</button>
+            <button data-mode="month">月</button>
+          </div>
+        </div>
+        <div id="trendChart" class="chart"></div>
+      </div>
+
+      <div class="panel panel-mid">
+        <div class="panel-header">
+          <div class="panel-title">培训类型结构对比（部门级 vs 岗位级）</div>
+          <div class="time-switch" data-target="type">
+            <button data-mode="year" class="active">年</button>
+            <button data-mode="quarter">季</button>
+            <button data-mode="month">月</button>
+          </div>
+        </div>
+        <div id="typeChart" class="chart"></div>
+      </div>
+
+      <div class="panel panel-small">
+        <div class="panel-header">
+          <div class="panel-title">资源使用效率：讲师/场地/设备利用率进度图</div>
+        </div>
+        <div id="resourceChart" class="chart"></div>
+      </div>
+    </div>
+
+    <!-- 中列：覆盖 + 分队评估 + 风险 + 业务特色 -->
+    <div class="column">
+      <div class="panel panel-mid">
+        <div class="panel-header">
+          <div class="panel-title">部门培训覆盖率 · 完成率 · 人均培训次数</div>
+          <div class="time-switch" data-target="overview">
+            <button data-mode="year" class="active">年</button>
+            <button data-mode="quarter">季</button>
+            <button data-mode="month">月</button>
+          </div>
+        </div>
+        <div id="coverageChart" class="chart"></div>
+      </div>
+
+      <div class="panel panel-mid">
+        <div class="panel-header">
+          <div class="panel-title">培训效果评估：各分队达标情况（完成率）</div>
+        </div>
+        <div class="ranking-list" id="rankingList"></div>
+      </div>
+
+      <div class="panel panel-small">
+        <div class="panel-header">
+          <div class="panel-title">风险预警 & 部门业务特色滚动播报</div>
+        </div>
+        <div class="panel-list" id="riskList"></div>
+        <div class="feature-ticker" id="featureTicker"></div>
+      </div>
+    </div>
+
+    <!-- 右列：证书矩阵 + 证书条播 + 计划进度 -->
+    <div class="column">
+      <div class="panel panel-mid">
+        <div class="panel-header">
+          <div class="panel-title">证书管理舱：分队 × 证书合规矩阵</div>
+          <div class="time-switch" data-target="matrix">
+            <button data-mode="year" class="active">年</button>
+            <button data-mode="quarter">季</button>
+            <button data-mode="month">月</button>
+          </div>
+        </div>
+        <div id="matrixChart" class="chart"></div>
+        <div style="font-size:11px;color:#7c8fb5;margin-top:2px;">
+          四个业务分队在上岗证、危险品证、航站楼准入证、飞行区准入证及其他资质类的合规完成情况一览，点击可联动三级看板查看名单。
+        </div>
+      </div>
+
+      <div class="panel panel-small">
+        <div class="panel-header">
+          <div class="panel-title">证书管理舱</div>
+        </div>
+        <div class="feature-ticker" id="certTicker">
+          <!-- 内部由 JS 填充 cert-inner + 多条 cert-item -->
+        </div>
+      </div>
+
+      <div class="panel panel-small">
+        <div class="panel-header">
+          <div class="panel-title">培训进度：对比计划与实际完成情况</div>
+          <div class="time-switch" data-target="plan">
+            <button data-mode="year" class="active">年</button>
+            <button data-mode="quarter">季</button>
+            <button data-mode="month">月</button>
+          </div>
+        </div>
+        <div id="planChart" class="chart"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- 详情弹窗（名单） -->
+<div class="modal-mask" id="detailMask">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="detailTitle">培训明细</div>
+      <div class="modal-close" id="detailClose">&times;</div>
+    </div>
+    <div class="modal-body">
+      <div id="detailDesc" style="margin-bottom:4px;color:#9fb9ff;"></div>
+      <table class="detail-table">
+        <thead>
+        <tr>
+          <th>姓名</th>
+          <th>分队</th>
+          <th>岗位</th>
+          <th>培训类型 / 证书</th>
+          <th>状态</th>
+        </tr>
+        </thead>
+        <tbody id="detailTableBody"></tbody>
+      </table>
+      <div style="margin-top:6px;font-size:11px;color:#7c8fb5;">
+        提示：点击姓名可在三级看板中查看个人培训及证书全履历（预留跳转接口）。
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 合规检查弹窗 -->
+<div class="compliance-mask" id="complianceMask">
+  <div class="compliance-dialog">
+    <div class="compliance-header">
+      <div class="compliance-title-main">部门级-国际客运室</div>
+      <div class="compliance-close" id="complianceClose">&times;</div>
+    </div>
+    <div class="compliance-subtitle">合规检查结果</div>
+
+    <div class="compliance-cards">
+      <div class="compliance-card">
+        <div class="compliance-card-value">95%</div>
+        <div class="compliance-card-label">培训合规率</div>
+      </div>
+      <div class="compliance-card mid">
+        <div class="compliance-card-value">2项</div>
+        <div class="compliance-card-label">待改进项</div>
+      </div>
+      <div class="compliance-card right">
+        <div class="compliance-card-value">100%</div>
+        <div class="compliance-card-label">证书合规率</div>
+      </div>
+    </div>
+
+    <div class="compliance-block">
+      <h3>合规项</h3>
+      <ul class="compliance-list">
+        <li>所有员工均已完成年度危险品培训</li>
+        <li>上岗证持有率达到 98% 以上</li>
+        <li>航站楼准入培训完成率 100%</li>
+        <li>培训档案完整率 100%</li>
+      </ul>
+    </div>
+
+    <div class="compliance-block">
+      <h3 class="compliance-pending-title">待改进项</h3>
+      <ul class="compliance-list">
+        <li>飞行区准入培训完成率需提升至 100%</li>
+        <li>其他未达 100% 的培训/证书类指标需持续跟踪整改</li>
+      </ul>
+    </div>
+
+    <div class="compliance-btn-row">
+      <button class="compliance-btn">生成合规报告</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  /************* 示例数据 *************/
+  const trendData = {
+    year: {
+      x: ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"],
+      persons: [60,72,80,65,78,90,88,95,92,85,70,68],
+      times:   [110,130,150,135,160,190,185,205,198,180,155,150]
+    },
+    quarter: {
+      x: ["2025Q1","2025Q2","2025Q3","2025Q4"],
+      persons: [90,110,120,105],
+      times:   [210,260,290,260]
+    },
+    month: {
+      x: ["1-5","6-10","11-15","16-20","21-25","26-31"],
+      persons: [22,18,19,21,16,14],
+      times:   [40,33,36,38,30,28]
+    }
+  };
+
+  const typeData = {
+    year: {
+      types: ["岗前培训","岗位培训","复训","危险品培训","安保培训","上岗证培训","航站楼准入","飞行区准入"],
+      deptTimes:  [50, 130, 80, 70, 65, 55, 40, 35],
+      deptPersons:[40, 110, 70, 60, 58, 50, 38, 34],
+      postTimes:  [40, 100, 60, 50, 45, 35, 30, 26],
+      postPersons:[30,  90, 50, 42, 40, 32, 26, 22]
+    },
+    quarter: {
+      types: ["岗前培训","岗位培训","复训","危险品培训","安保培训","上岗证培训","航站楼准入","飞行区准入"],
+      deptTimes:  [12, 32, 20, 16, 15, 12, 9, 8],
+      deptPersons:[10, 28, 18, 15, 14, 11, 8, 7],
+      postTimes:  [9, 25, 15, 12, 11, 9, 6, 5],
+      postPersons:[8, 22, 14, 11, 10, 8, 5, 4]
+    },
+    month: {
+      types: ["岗前培训","岗位培训","复训","危险品培训","安保培训","上岗证培训","航站楼准入","飞行区准入"],
+      deptTimes:  [3, 10, 6, 5, 5, 4, 3, 3],
+      deptPersons:[3,  9, 6, 5, 5, 4, 3, 3],
+      postTimes:  [2,  7, 4, 4, 3, 3, 2, 2],
+      postPersons:[2,  6, 4, 4, 3, 3, 2, 2]
+    }
+  };
+
+  const overviewData = {
+    year:   { coverageDept: 0.95, coverageCompany: 0.90, finishDept: 0.93, finishCompany: 0.89, avgTimes: 2.8 },
+    quarter:{ coverageDept: 0.90, coverageCompany: 0.88, finishDept: 0.91, finishCompany: 0.87, avgTimes: 0.9 },
+    month:  { coverageDept: 0.88, coverageCompany: 0.86, finishDept: 0.89, finishCompany: 0.85, avgTimes: 0.35 }
+  };
+
+  // 资源使用效率：讲师/场地/设备利用率（百分比）
+  const resourceEffData = {
+    metrics: ["讲师利用率","场地占用率","设备使用率"],
+    rates:   [82, 76, 68],   // 百分比
+    target:  75              // 目标线（百分比）
+  };
+
+  const rankingData = [
+    { team: "国际值机分队（37人）", rate: 0.96, persons: 36, times: 120 },
+    { team: "国际服务分队（31人）", rate: 0.94, persons: 29, times: 102 },
+    { team: "国际行拣分队（14人）", rate: 0.89, persons: 12, times: 45 },
+    { team: "国际行查分队（13人）", rate: 0.82, persons: 11, times: 36 }
+  ];
+
+  // 证书管理矩阵：分队 × 证书
+  // value: [certIndex, teamIndex, 持证率%, 即将到期人数, 已过期人数]
+  const matrixData = {
+    year: {
+      teams: ["国际值机分队","国际服务分队","国际行拣分队","国际行查分队"],
+      certs: ["上岗证","危险品证","航站楼准入证","飞行区准入证","其他资质类"],
+      values: [
+        [0,0,98,1,0],[1,0,97,1,0],[2,0,100,0,0],[3,0,94,2,0],[4,0,96,0,0],
+        [0,1,99,0,0],[1,1,96,1,0],[2,1,100,0,0],[3,1,93,2,0],[4,1,95,1,0],
+        [0,2,97,1,0],[1,2,95,1,0],[2,2,100,0,0],[3,2,92,1,0],[4,2,93,0,0],
+        [0,3,96,1,0],[1,3,94,1,0],[2,3,100,0,0],[3,3,90,2,1],[4,3,92,0,0]
+      ]
+    },
+    quarter: {
+      teams: ["国际值机分队","国际服务分队","国际行拣分队","国际行查分队"],
+      certs: ["上岗证","危险品证","航站楼准入证","飞行区准入证","其他资质类"],
+      values: [
+        [0,0,97,1,0],[1,0,96,1,0],[2,0,100,0,0],[3,0,93,2,0],[4,0,95,0,0],
+        [0,1,98,0,0],[1,1,95,1,0],[2,1,100,0,0],[3,1,92,2,0],[4,1,94,1,0],
+        [0,2,96,1,0],[1,2,94,1,0],[2,2,100,0,0],[3,2,91,1,0],[4,2,92,0,0],
+        [0,3,95,1,0],[1,3,93,1,0],[2,3,100,0,0],[3,3,89,2,1],[4,3,91,0,0]
+      ]
+    },
+    month: {
+      teams: ["国际值机分队","国际服务分队","国际行拣分队","国际行查分队"],
+      certs: ["上岗证","危险品证","航站楼准入证","飞行区准入证","其他资质类"],
+      values: [
+        [0,0,96,1,0],[1,0,95,1,0],[2,0,100,0,0],[3,0,92,2,0],[4,0,94,0,0],
+        [0,1,97,0,0],[1,1,94,1,0],[2,1,100,0,0],[3,1,91,2,0],[4,1,93,1,0],
+        [0,2,95,1,0],[1,2,93,1,0],[2,2,100,0,0],[3,2,90,1,0],[4,2,91,0,0],
+        [0,3,94,1,0],[1,3,92,1,0],[2,3,100,0,0],[3,3,88,2,1],[4,3,90,0,0]
+      ]
+    }
+  };
+  let currentMatrixMode = "year";
+
+  // 证书管理舱条播数据
+  const certTickerData = [
+    {
+      category: "证书合规",
+      target: "国际值机分队",
+      desc:   "上岗证持证率 98%，危险品证 97%，航站楼准入证 100%，飞行区准入证 94%，1 人证件 30 天内到期",
+      date:   "2025-11-30",
+      isLatest: true
+    },
+    {
+      category: "证书合规",
+      target: "国际服务分队",
+      desc:   "上岗证持证率 99%，危险品证 96%，航站楼准入证 100%，飞行区准入证 93%，2 人需尽快安排飞行区准入培训",
+      date:   "2025-11-29",
+      isLatest: true
+    },
+    {
+      category: "证书到期预警",
+      target: "国际行查分队",
+      desc:   "飞行区准入证持证率 90%，其中 1 人证件已过期、2 人 30 天内到期",
+      date:   "2025-11-28",
+      isLatest: false
+    },
+    {
+      category: "证书合规",
+      target: "国际行拣分队",
+      desc:   "危险品证持证率 95%，其他资质类证件合规率 93%，建议下一轮复训优先安排高风险岗位",
+      date:   "2025-11-26",
+      isLatest: false
+    }
+  ];
+
+  // 部门业务特色滚动数据（单条轮播）
+  const featureData = [
+    {
+      category: "外语能力",
+      target: "国际服务分队 · 候机楼服务岗",
+      desc:   "英语 B2 及以上占比 92%，口语测评平均 4.4/5",
+      date:   "2025-11-30",
+      isLatest: true
+    },
+    {
+      category: "跨境政策",
+      target: "国际值机分队 · 值机岗",
+      desc:   "RCEP / 中美签证政策考核通过率 96%，平均分 88 分",
+      date:   "2025-11-28",
+      isLatest: false
+    },
+    {
+      category: "跨境政策",
+      target: "国际行查分队 · 行李查询岗",
+      desc:   "行李异常跨境申报场景实操通过率 94%，投诉率持续下降",
+      date:   "2025-11-25",
+      isLatest: false
+    },
+    {
+      category: "外语能力",
+      target: "国际值机分队 · 问询岗",
+      desc:   "多语种问询（英+日）岗位持证率 85%，常见问答脚本覆盖率 100%",
+      date:   "2025-11-20",
+      isLatest: false
+    }
+  ];
+  let featureIndex = 0;
+  let featureTimer = null;
+
+  let certTickerTimer = null;
+
+  const planData = {
+    year: {
+      x: ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"],
+      planTimes: [120,130,140,140,150,160,165,170,170,160,150,145],
+      actualTimes:[110,130,150,135,160,190,185,205,198,180,155,150],
+      planPersons:[80,82,85,86,88,90,90,90,90,88,85,84],
+      actualPersons:[60,72,80,65,78,90,88,95,92,85,70,68]
+    },
+    quarter: {
+      x: ["2025Q1","2025Q2","2025Q3","2025Q4"],
+      planTimes:[390,415,430,430],
+      actualTimes:[210,260,290,260],
+      planPersons:[85,88,90,88],
+      actualPersons:[90,110,120,105]
+    },
+    month: {
+      x: ["1-5","6-10","11-15","16-20","21-25","26-31"],
+      planTimes:[42,35,36,38,32,30],
+      actualTimes:[40,33,36,38,30,28],
+      planPersons:[24,20,20,22,18,16],
+      actualPersons:[22,18,19,21,16,14]
+    }
+  };
+
+  const riskData = [
+    {
+      type: "危险品初训覆盖不足",
+      desc: "值机岗仍有 3 人未完成危险品初训",
+      level: "high",
+      key: "dangerous_goods_missing",
+      persons: [
+        { name: "张三", team: "国际值机分队", post: "值机员", trainType: "危险品初训", status: "未完成" },
+        { name: "李四", team: "国际值机分队", post: "值机员", trainType: "危险品初训", status: "未完成" },
+        { name: "王五", team: "国际值机分队", post: "值机员", trainType: "危险品初训", status: "未完成" }
+      ]
+    },
+    {
+      type: "上岗证即将到期",
+      desc: "服务岗 5 人上岗证 30 天内到期",
+      level: "mid",
+      key: "license_expire_soon",
+      persons: [
+        { name: "赵六",  team: "国际服务分队", post: "值机服务",   trainType: "上岗证培训", status: "证件30天内到期" },
+        { name: "孙七",  team: "国际服务分队", post: "问询服务",   trainType: "上岗证培训", status: "证件30天内到期" },
+        { name: "周八",  team: "国际服务分队", post: "候机楼服务", trainType: "上岗证培训", status: "证件30天内到期" },
+        { name: "吴九",  team: "国际服务分队", post: "候机楼服务", trainType: "上岗证培训", status: "证件30天内到期" },
+        { name: "郑十",  team: "国际服务分队", post: "问询服务",   trainType: "上岗证培训", status: "证件30天内到期" }
+      ]
+    },
+    {
+      type: "飞行区准入复训逾期",
+      desc: "行查/行拣共 2 人飞行区准入复训逾期",
+      level: "high",
+      key: "airside_retrain_overdue",
+      persons: [
+        { name: "钱一",  team: "国际行查分队", post: "行李查询员", trainType: "飞行区准入复训", status: "已逾期" },
+        { name: "刘二",  team: "国际行拣分队", post: "行李分拣员", trainType: "飞行区准入复训", status: "已逾期" }
+      ]
+    }
+  ];
+
+  /************* 图表实例 *************/
+  let trendChart, typeChart, resourceChart, coverageChart, matrixChart, planChart;
+
+  function initCharts() {
+    trendChart    = echarts.init(document.getElementById("trendChart"));
+    typeChart     = echarts.init(document.getElementById("typeChart"));
+    resourceChart = echarts.init(document.getElementById("resourceChart"));
+    coverageChart = echarts.init(document.getElementById("coverageChart"));
+    matrixChart   = echarts.init(document.getElementById("matrixChart"));
+    planChart     = echarts.init(document.getElementById("planChart"));
+
+    renderTrendChart("year");
+    renderTypeChart("year");
+    renderResourceChart();
+    renderCoverageChart("year");
+    renderMatrixChart("year");
+    renderPlanChart("year");
+
+    trendChart.on("click", p => {
+      openDetailModal("培训趋势明细 - " + p.name, "按时间段查看受训人员名单示例", riskData[0].persons);
+    });
+    typeChart.on("click", p => {
+      openDetailModal("培训类型明细 - " + p.name, "按培训类型查看受训人员名单示例", riskData[1].persons);
+    });
+    coverageChart.on("click", () => {
+      openDetailModal("覆盖率明细", "此处可联动至三级看板，展示按分队 / 岗位拆分的人员名单", riskData[2].persons);
+    });
+    matrixChart.on("click", p => {
+      const d = matrixData[currentMatrixMode];
+      if (!p.value) return;
+      const v = p.value;
+      const certName = d.certs[v[0]];
+      const teamName = d.teams[v[1]];
+      openDetailModal(
+        "证书合规明细 - " + teamName + " × " + certName,
+        "示例：该分队该证书的持证/到期/过期人员名单，可在三级看板中查看完整档案。",
+        riskData[1].persons
+      );
+    });
+    planChart.on("click", p => {
+      openDetailModal("计划 vs 实际偏差明细 - " + p.name, "本时间段内的培训对象名单示例", riskData[1].persons);
+    });
+
+    window.addEventListener("resize", () => {
+      trendChart.resize(); typeChart.resize(); resourceChart.resize();
+      coverageChart.resize(); matrixChart.resize(); planChart.resize();
+    });
+  }
+
+  function renderTrendChart(mode) {
+    const d = trendData[mode];
+    const option = {
+      textStyle: { color: "#cfe4ff" },
+      tooltip: {
+        trigger: "axis",
+        backgroundColor: "rgba(0,20,50,0.9)",
+        borderColor: "#4aa3ff",
+        borderWidth: 1,
+        formatter: params => {
+          let s = params[0].axisValue + "<br/>";
+          params.forEach(p => { s += p.marker + p.seriesName + "：<b>" + p.data + "</b><br/>"; });
+          return s;
+        }
+      },
+      grid: { left: 40, right: 20, top: 25, bottom: 25 },
+      legend: {
+        data: ["受训总人数", "培训总次数（人次）"],
+        top: 4,
+        textStyle: { color: "#9eb7ff", fontSize: 11 }
+      },
+      xAxis: {
+        type: "category", data: d.x,
+        axisLine: { lineStyle: { color: "#4f7ae8" } },
+        axisLabel: { fontSize: 11 }
+      },
+      yAxis: {
+        type: "value", name: "人数 / 人次",
+        axisLine: { lineStyle: { color: "#4f7ae8" } },
+        splitLine: { lineStyle: { color: "rgba(86,136,199,0.3)" } },
+        axisLabel: { fontSize: 11 }
+      },
+      series: [
+        {
+          name: "受训总人数",
+          type: "bar",
+          data: d.persons,
+          barWidth: 14,
+          itemStyle: { color:"#4fd1ff", borderRadius: [4,4,0,0], shadowBlur: 10, shadowColor: "rgba(0,191,255,0.8)" }
+        },
+        {
+          name: "培训总次数（人次）",
+          type: "line",
+          data: d.times,
+          smooth: true,
+          symbol: "circle",
+          symbolSize: 5,
+          lineStyle: { width: 2, color:"#ffe066" },
+          itemStyle:{ color:"#ffe066" }
+        }
+      ],
+      animationDuration: 800,
+      animationDurationUpdate: 600
+    };
+    trendChart.setOption(option, true);
+
+    if (mode === "year") {
+      const sumTimes = d.times.reduce((a,b)=>a+b,0);
+      const maxPersons = Math.max(...d.persons);
+      document.getElementById("kpiTotalPersons").innerText = maxPersons.toString();
+      document.getElementById("kpiTotalTimes").innerText   = sumTimes.toString();
+    }
+  }
+
+  function renderTypeChart(mode) {
+    const d = typeData[mode];
+    const option = {
+      textStyle: { color: "#cfe4ff" },
+      tooltip: {
+        trigger: "axis",
+        backgroundColor: "rgba(0,20,50,0.9)",
+        borderColor: "#4aa3ff",
+        borderWidth: 1,
+        formatter: params => {
+          let s = params[0].axisValue + "<br/>";
+          params.forEach(p => { s += p.marker + p.seriesName + "：<b>" + p.data + "</b><br/>"; });
+          return s;
+        }
+      },
+      legend: {
+        data: ["部门级总次数","岗位级总次数","部门级总人数","岗位级总人数"],
+        top: 4,
+        textStyle: { color: "#9eb7ff", fontSize: 11 }
+      },
+      grid: { left: 40, right: 20, top: 25, bottom: 55 },
+      xAxis: {
+        type: "category",
+        data: d.types,
+        axisLabel: { fontSize: 10, rotate: 30 },
+        axisLine: { lineStyle: { color: "#4f7ae8" } }
+      },
+      yAxis: {
+        type: "value",
+        name: "人数 / 人次",
+        axisLine: { lineStyle: { color: "#4f7ae8" } },
+        splitLine: { lineStyle: { color: "rgba(86,136,199,0.3)" } },
+        axisLabel: { fontSize: 11 }
+      },
+      series: [
+        {
+          name: "部门级总次数",
+          type: "bar",
+          stack: "times",
+          data: d.deptTimes,
+          barWidth: 10,
+          itemStyle:{ color:"#4fd1ff", borderRadius:[4,4,0,0] }
+        },
+        {
+          name: "岗位级总次数",
+          type: "bar",
+          stack: "times",
+          data: d.postTimes,
+          barWidth: 10,
+          itemStyle:{ color:"#1e90ff" }
+        },
+        {
+          name: "部门级总人数",
+          type: "line",
+          data: d.deptPersons,
+          smooth: true,
+          symbol: "circle",
+          symbolSize: 4,
+          lineStyle:{ width:1.8, color:"#ffe066" },
+          itemStyle:{ color:"#ffe066" }
+        },
+        {
+          name: "岗位级总人数",
+          type: "line",
+          data: d.postPersons,
+          smooth: true,
+          symbol: "circle",
+          symbolSize: 4,
+          lineStyle:{ width:1.8, type:"dashed", color:"#ff6b6b" },
+          itemStyle:{ color:"#ff6b6b" }
+        }
+      ],
+      animationDuration: 800,
+      animationDurationUpdate: 600
+    };
+    typeChart.setOption(option, true);
+  }
+
+  // 左下资源使用效率进度图（横向进度条 + 目标线）
+  function renderResourceChart() {
+    const d = resourceEffData;
+    const option = {
+      tooltip: {
+        trigger: "axis",
+        axisPointer: { type: "shadow" },
+        backgroundColor: "rgba(0,20,50,0.9)",
+        borderColor: "#4aa3ff",
+        borderWidth: 1,
+        formatter: params => {
+          const p = params[0];
+          return `${p.name}<br/>当前利用率：<b>${p.data}%</b><br/>目标值：<b>${d.target}%</b>`;
+        }
+      },
+      grid:{ left:60,right:20,top:25,bottom:25 },
+      xAxis:{
+        type:"value",
+        min:0,
+        max:100,
+        axisLabel:{ formatter:v => v+"%", fontSize:11 },
+        axisLine:{ lineStyle:{ color:"#4f7ae8" } },
+        splitLine:{ lineStyle:{ color:"rgba(86,136,199,0.3)" } }
+      },
+      yAxis:{
+        type:"category",
+        data:d.metrics,
+        axisLine:{ lineStyle:{ color:"#4f7ae8" } },
+        axisLabel:{ fontSize:11 }
+      },
+      series:[{
+        name:"利用率",
+        type:"bar",
+        data:d.rates,
+        barWidth:10,
+        itemStyle:{ color:"#4fd1ff", borderRadius:[0,999,999,0] },
+        label:{
+          show:true,
+          position:"right",
+          formatter: "{c}%",
+          color:"#cfe4ff",
+          fontSize:10
+        },
+        markLine:{
+          symbol:"none",
+          label:{
+            show:true,
+            formatter:"目标 "+d.target+"%",
+            color:"#ffe066",
+            fontSize:10
+          },
+          lineStyle:{ type:"dashed", color:"#ffe066" },
+          data:[{ xAxis:d.target }]
+        }
+      }],
+      animationDuration:800,
+      animationDurationUpdate:600
+    };
+    resourceChart.setOption(option,true);
+  }
+
+  function renderCoverageChart(mode) {
+    const d = overviewData[mode];
+    const deptCoverage = Math.round(d.coverageDept * 100);
+    const companyCoverage = Math.round(d.coverageCompany * 100);
+    document.getElementById("kpiCoverage").innerText = deptCoverage + "%";
+    const cmpDom = document.getElementById("kpiCompare");
+    if (deptCoverage >= companyCoverage + 2) {
+      cmpDom.innerText = "领先";
+      cmpDom.className = "badge badge-green";
+    } else if (deptCoverage + 2 < companyCoverage) {
+      cmpDom.innerText = "落后";
+      cmpDom.className = "badge badge-red";
+    } else {
+      cmpDom.innerText = "持平";
+      cmpDom.className = "badge badge-yellow";
+    }
+
+    const option = {
+      tooltip: {
+        trigger: "item",
+        formatter: p => p.marker + p.name + "：<b>" + p.value + "%</b>",
+        backgroundColor: "rgba(2,15,40,0.95)",
+        borderColor: "#4aa3ff",
+        borderWidth: 1
+      },
+      legend: {
+        top: 4,
+        data: ["国际客运室覆盖率","公司平均覆盖率"],
+        textStyle: { color: "#9eb7ff", fontSize: 11 }
+      },
+      series: [
+        {
+          name: "国际客运室覆盖率",
+          type: "pie",
+          radius: ["55%","75%"],
+          center: ["50%","56%"],
+          startAngle: 210,
+          endAngle: -30,
+          data: [
+            { value: deptCoverage, name: "国际客运室覆盖率" },
+            { value: 100 - deptCoverage, name: "未覆盖", itemStyle: { color: "rgba(10,30,70,0.9)" } }
+          ],
+          label: { show: false },
+          itemStyle: { shadowBlur: 15, shadowColor: "rgba(0,200,255,0.9)" }
+        },
+        {
+          name: "公司平均覆盖率",
+          type: "pie",
+          radius: ["40%","50%"],
+          center: ["50%","56%"],
+          silent: true,
+          data: [
+            { value: companyCoverage, name: "公司平均覆盖率" },
+            { value: 100 - companyCoverage, name: " ", itemStyle: { color: "rgba(5,15,35,0.9)" } }
+          ],
+          label: { show: false },
+          itemStyle: { opacity: 0.6 }
+        }
+      ],
+      graphic: {
+        type: "group",
+        left: "center",
+        top: "center",
+        children: [
+          { type:"text", style:{ text: deptCoverage + "%", fill:"#ffffff", fontSize:22, fontWeight:"bold", textAlign:"center" }, left:"center", top:"40%" },
+          { type:"text", style:{ text: "人均培训次数：" + d.avgTimes.toFixed(1), fill:"#9fd9ff", fontSize:12, textAlign:"center" }, left:"center", top:"62%" }
+        ]
+      },
+      animationDuration: 900,
+      animationDurationUpdate: 700
+    };
+    coverageChart.setOption(option, true);
+  }
+
+  function renderMatrixChart(mode) {
+    currentMatrixMode = mode;
+    const d = matrixData[mode];
+    const option = {
+      tooltip: {
+        position: "top",
+        backgroundColor: "rgba(0,20,50,0.9)",
+        borderColor: "#4aa3ff",
+        borderWidth: 1,
+        formatter: p => {
+          const v = p.value;
+          const cert = d.certs[v[0]];
+          const team = d.teams[v[1]];
+          const rate = v[2];
+          const expiring = v[3];
+          const expired  = v[4];
+          return `${team} × ${cert}<br/>持证率：<b>${rate}%</b><br/>30天内到期：${expiring} 人<br/>已过期：${expired} 人`;
+        }
+      },
+      grid: { left: 65, right: 10, top: 30, bottom: 30 },
+      xAxis: {
+        type: "category",
+        data: d.certs,
+        splitArea: { show: true },
+        axisLabel:{ fontSize:10, rotate:20 },
+        axisLine:{ lineStyle:{ color:"#4f7ae8" } }
+      },
+      yAxis: {
+        type: "category",
+        data: d.teams,
+        splitArea: { show: true },
+        axisLine:{ lineStyle:{ color:"#4f7ae8" } },
+        axisLabel:{ fontSize:11 }
+      },
+      visualMap: {
+        min: 80,
+        max: 100,
+        dimension: 2,
+        calculable: true,
+        orient: "horizontal",
+        left: "center",
+        bottom: 0,
+        textStyle:{ color:"#9eb7ff", fontSize:10 }
+      },
+      series: [{
+        type: "heatmap",
+        data: d.values,
+        label: {
+          show: true,
+          formatter: p => p.value[2] ? p.value[2] + "%" : "",
+          color:"#fff",
+          fontSize:10
+        },
+        emphasis: {
+          itemStyle: { shadowBlur: 10, shadowColor: "rgba(0,0,0,0.8)" }
+        }
+      }],
+      animationDuration: 800,
+      animationDurationUpdate: 600
+    };
+    matrixChart.setOption(option, true);
+  }
+
+  function renderPlanChart(mode) {
+    const d = planData[mode];
+    const option = {
+      tooltip: {
+        trigger: "axis",
+        backgroundColor: "rgba(0,20,50,0.9)",
+        borderColor: "#4aa3ff",
+        borderWidth: 1,
+        formatter: params => {
+          let s = params[0].axisValue + "<br/>";
+          params.forEach(p => { s += p.marker + p.seriesName + "：<b>" + p.data + "</b><br/>"; });
+          return s;
+        }
+      },
+      legend: {
+        data: ["计划总次数（人次）","实际总次数（人次）","计划受训总人数","实际受训总人数"],
+        top: 4,
+        textStyle: { color: "#9eb7ff", fontSize: 11 }
+      },
+      grid: { left: 40, right: 20, top: 25, bottom: 25 },
+      xAxis: {
+        type: "category",
+        data: d.x,
+        axisLine: { lineStyle: { color: "#4f7ae8" } },
+        axisLabel: { fontSize: 10 }
+      },
+      yAxis: {
+        type: "value",
+        axisLine: { lineStyle: { color: "#4f7ae8" } },
+        splitLine: { lineStyle: { color: "rgba(86,136,199,0.3)" } },
+        axisLabel: { fontSize: 11 }
+      },
+      series: [
+        { name:"计划总次数（人次）", type:"line", data:d.planTimes, smooth:true, symbol:"circle", symbolSize:3 },
+        { name:"实际总次数（人次）", type:"line", data:d.actualTimes, smooth:true, symbol:"circle", symbolSize:3, areaStyle:{opacity:0.2} },
+        { name:"计划受训总人数", type:"bar", data:d.planPersons, barWidth:8 },
+        { name:"实际受训总人数", type:"bar", data:d.actualPersons, barWidth:8 }
+      ],
+      animationDuration: 800,
+      animationDurationUpdate: 600
+    };
+    planChart.setOption(option, true);
+  }
+
+  /************* 排名 & 风险 *************/
+  function renderRankingList() {
+    const container = document.getElementById("rankingList");
+    container.innerHTML = "";
+    rankingData.forEach(item => {
+      const ratePct = Math.round(item.rate * 100);
+      let cls = "", statusText = "达标";
+      if (ratePct >= 95) { statusText = "优秀"; }
+      else if (ratePct >= 90) { cls = "mid"; statusText = "良好"; }
+      else { cls = "low"; statusText = "需整改"; }
+
+      const row = document.createElement("div");
+      row.className = "rank-row";
+      row.innerHTML = `
+        <div class="rank-header">
+          <div class="rank-name">${item.team}</div>
+          <div class="rank-value">${ratePct}% · 人数${item.persons} · 次数${item.times}</div>
+        </div>
+        <div class="rank-bar">
+          <div class="rank-bar-inner ${cls}" style="width:${ratePct}%;"></div>
+        </div>
+        <div class="rank-status">状态：${statusText} · 点击可查看分队三级看板</div>
+      `;
+      row.addEventListener("click", () => {
+        openDetailModal(
+          "分队培训明细 - " + item.team,
+          "此处可跳转三级看板或展示该分队全员培训名单示例",
+          riskData[1].persons
+        );
+      });
+      container.appendChild(row);
+    });
+  }
+
+  function renderRiskList() {
+    const container = document.getElementById("riskList");
+    container.innerHTML = "";
+    let riskCount = 0;
+    riskData.forEach(item => {
+      const div = document.createElement("div");
+      const levelTag = item.level === "high" ? "重大" : "一般";
+      const badgeClass = item.level === "high" ? "badge-red" : "badge-yellow";
+      div.className = "risk-item";
+      div.innerHTML = `
+        <div class="risk-main">
+          <div class="risk-type">${item.type}
+            <span class="badge ${badgeClass}">${levelTag}风险</span>
+          </div>
+          <div class="risk-detail">${item.desc}</div>
+        </div>
+        <div class="risk-tag" data-key="${item.key}">查看明细 (${item.persons.length})</div>
+      `;
+      div.querySelector(".risk-tag").addEventListener("click", () => {
+        openDetailModal("风险明细 - " + item.type, item.desc + "（示例名单）", item.persons);
+      });
+      container.appendChild(div);
+      riskCount++;
+    });
+    document.getElementById("kpiRiskCount").innerText = riskCount.toString();
+  }
+
+  /************* 滚动模块：业务特色（单条轮播） *************/
+  function startFeatureTicker() {
+    const box = document.getElementById("featureTicker");
+    if (!box || !featureData.length) return;
+
+    function showFeature(idx) {
+      const data = featureData[idx];
+      const isLatest = !!data.isLatest;
+      const html = `
+        <div class="feature-item">
+          <span class="feature-tags">
+            ${isLatest ? '<span class="feature-tag feature-tag-latest">最新</span>' : ''}
+            <span class="feature-tag">${data.category}</span>
+          </span>
+          <span class="feature-main-text">${data.target}：${data.desc}</span>
+          <span class="feature-date">${data.date}</span>
+        </div>
+      `;
+      box.innerHTML = html;
+      const itemDom = box.querySelector(".feature-item");
+      requestAnimationFrame(() => itemDom.classList.add("show"));
+    }
+
+    showFeature(0);
+    if (featureTimer) clearInterval(featureTimer);
+    featureTimer = setInterval(() => {
+      featureIndex = (featureIndex + 1) % featureData.length;
+      showFeature(featureIndex);
+    }, 4000);
+
+    box.addEventListener("mouseenter", () => {
+      if (featureTimer) clearInterval(featureTimer);
+    });
+    box.addEventListener("mouseleave", () => {
+      if (featureTimer) clearInterval(featureTimer);
+      featureTimer = setInterval(() => {
+        featureIndex = (featureIndex + 1) % featureData.length;
+        showFeature(featureIndex);
+      }, 4000);
+    });
+  }
+
+  /************* 证书管理舱：多条向上滚动列表 *************/
+  /************* 证书管理舱：多条向上滚动列表（可点击查看明细） *************/
+  function startCertTicker() {
+    const outer = document.getElementById("certTicker");
+    if (!outer || !certTickerData.length) return;
+
+    // 清空容器，重建 inner
+    outer.innerHTML = "";
+    const inner = document.createElement("div");
+    inner.className = "cert-inner";
+    outer.appendChild(inner);
+
+    // 渲染所有条目
+    certTickerData.forEach(item => {
+      const isLatest = !!item.isLatest;
+      const div = document.createElement("div");
+      div.className = "cert-item";
+      div.innerHTML = `
+        <span class="cert-badges">
+          ${isLatest ? '<span class="feature-tag feature-tag-latest">最新</span>' : ''}
+          <span class="feature-tag">${item.category}</span>
+        </span>
+        <span class="feature-main-text">${item.target}：${item.desc}</span>
+        <span class="cert-date">${item.date}</span>
+      `;
+
+      // 每条可以点，弹出明细（这里先用示例名单，后面你可以换成真实数据）
+      div.addEventListener("click", () => {
+        openDetailModal(
+          "证书管理舱明细 - " + item.target,
+          item.category + " · " + item.date + " · " + item.desc + "（此处联动三级看板）",
+          riskData[1].persons   // ★ 这里暂时复用一份示例数据，你之后可以按证书类型替换成真的名单
+        );
+      });
+
+      inner.appendChild(div);
+    });
+
+    // 只有一条就不用滚动
+    if (inner.children.length <= 1) return;
+
+    // 用第一条的高度作为一次滚动的距离（考虑自适应、高度变化）
+    let itemHeight = inner.children[0].offsetHeight;
+
+    function scrollOnce() {
+      const firstRow = inner.children[0];
+      if (!firstRow) return;
+
+      // 每次滚动前重新取高度，避免窗口变化导致高度不准
+      itemHeight = firstRow.offsetHeight || itemHeight;
+
+      inner.style.transition = "transform .45s ease-out";
+      inner.style.transform = "translateY(-" + itemHeight + "px)";
+
+      setTimeout(() => {
+        inner.style.transition = "none";
+        inner.appendChild(firstRow);   // 把第一条移到最后
+        inner.style.transform = "translateY(0)";
+      }, 470);
+    }
+
+    // 定时轮播
+    if (certTickerTimer) clearInterval(certTickerTimer);
+    certTickerTimer = setInterval(scrollOnce, 3500);   // 3.5 秒滚动一条
+
+    // 悬停暂停，移开继续
+    outer.addEventListener("mouseenter", () => {
+      if (certTickerTimer) clearInterval(certTickerTimer);
+    });
+    outer.addEventListener("mouseleave", () => {
+      if (certTickerTimer) clearInterval(certTickerTimer);
+      certTickerTimer = setInterval(scrollOnce, 3500);
+    });
+  }
+
+  /************* 详情弹窗 *************/
+  function openDetailModal(title, desc, persons) {
+    const mask = document.getElementById("detailMask");
+    document.getElementById("detailTitle").innerText = title;
+    document.getElementById("detailDesc").innerText = desc;
+    const tbody = document.getElementById("detailTableBody");
+    tbody.innerHTML = "";
+    (persons || []).forEach(p => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><a href="javascript:void(0);" onclick="openLevel3View({name:'${p.name}'})" style="color:#7dd3ff;text-decoration:underline;">${p.name}</a></td>
+        <td>${p.team}</td>
+        <td>${p.post}</td>
+        <td>${p.trainType}</td>
+        <td>${p.status}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+    mask.classList.add("show");
+  }
+  function closeDetailModal() {
+    document.getElementById("detailMask").classList.remove("show");
+  }
+  function openLevel3View(params) {
+    console.log("跳转三级看板示例参数：", params);
+    // 这里预留真实跳转三级看板接口
+  }
+
+  /************* 时间切换 *************/
+  function initTimeSwitchers() {
+    document.querySelectorAll(".time-switch").forEach(sw => {
+      sw.addEventListener("click", e => {
+        if (e.target.tagName.toLowerCase() !== "button") return;
+        const target = sw.getAttribute("data-target");
+        const mode = e.target.getAttribute("data-mode");
+        sw.querySelectorAll("button").forEach(btn => btn.classList.toggle("active", btn === e.target));
+        switch (target) {
+          case "trend":    renderTrendChart(mode); break;
+          case "type":     renderTypeChart(mode); break;
+          case "overview": renderCoverageChart(mode); break;
+          case "matrix":   renderMatrixChart(mode); break;
+          case "plan":     renderPlanChart(mode); break;
+        }
+      });
+    });
+  }
+
+  /************* 合规弹窗 *************/
+  function initComplianceDialog() {
+    const mask = document.getElementById("complianceMask");
+    document.getElementById("btnCompliance").addEventListener("click", () => {
+      mask.classList.add("show");
+    });
+    document.getElementById("complianceClose").addEventListener("click", () => {
+      mask.classList.remove("show");
+    });
+    mask.addEventListener("click", e => {
+      if (e.target.id === "complianceMask") mask.classList.remove("show");
+    });
+  }
+
+  /************* 页面初始化 *************/
+  window.addEventListener("load", () => {
+    initCharts();
+    renderRankingList();
+    renderRiskList();
+    initTimeSwitchers();
+    initComplianceDialog();
+    startFeatureTicker();   // 中下业务特色
+    startCertTicker();      // 右中证书管理舱条播
+
+    document.getElementById("detailClose").addEventListener("click", closeDetailModal);
+    document.getElementById("detailMask").addEventListener("click", e => {
+      if (e.target.id === "detailMask") closeDetailModal();
+    });
+  });
+</script>
+</body>
+</html>
