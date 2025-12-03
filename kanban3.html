@@ -251,7 +251,7 @@
     }
 
     #trainingPathChart {
-      height: 220px;
+      height: 200px;
     }
 
     #chainInsightChart {
@@ -426,10 +426,26 @@
       color: var(--accent-warn);
     }
 
-    /* 右列：监察问题列表 */
+    /* 右列：监察问题列表（向上滚动） */
     .bottleneck-list {
       margin-top: 6px;
       font-size: 12px;
+    }
+
+    #bottleneckList {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .bottleneck-scroll {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      animation-name: scrollUp;
+      animation-timing-function: linear;
+      animation-iteration-count: infinite;
+      animation-duration: var(--scroll-duration, 30s);
+      will-change: transform;
     }
 
     .bottleneck-item {
@@ -452,6 +468,7 @@
       text-align: right;
       font-size: 11px;
       color: var(--text-sub);
+      margin-left: 8px;
     }
 
     .pill-risk {
@@ -480,6 +497,60 @@
       background: rgba(0, 228, 255, 0.07);
     }
 
+    /* 岗位在册人员明细弹窗 */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+    }
+
+    .modal-content {
+      background: rgba(4, 16, 40, 0.98);
+      border-radius: 12px;
+      border: 1px solid rgba(0, 228, 255, 0.6);
+      min-width: 260px;
+      max-width: 420px;
+      padding: 10px 12px;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+      font-size: 12px;
+      color: var(--text-main);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+
+    .modal-title {
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .modal-close {
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      color: var(--text-sub);
+    }
+
+    .modal-section-title {
+      font-size: 11px;
+      color: var(--text-sub);
+      margin-top: 4px;
+      margin-bottom: 2px;
+    }
+
+    .modal-tag-list {
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
     /* 人-岗-证-训链路说明块 */
     .chain-text {
       margin-top: 6px;
@@ -490,6 +561,16 @@
 
     .chain-text strong {
       color: var(--accent);
+    }
+
+    /* 日常验证问题向上滚动动画 */
+    @keyframes scrollUp {
+      0% {
+        transform: translateY(0);
+      }
+      100% {
+        transform: translateY(var(--scroll-distance));
+      }
     }
   </style>
 </head>
@@ -557,26 +638,31 @@
           </div>
         </article>
 
-        <!-- 培训历程 & 发展路径 -->
+        <!-- 个人信息与持证情况及发展分析 -->
         <article class="card">
           <div class="card-header">
             <div class="card-title">
               <div class="title-bar"></div>
-              培训历程与发展路径
+              个人信息与持证情况及发展分析
             </div>
             <div class="card-tools">
-              <span class="card-subtitle">时间轴回看培训记录 · 一眼看清已完成/待完成模块</span>
+              <span class="card-subtitle">聚焦单人 · 一眼看清基本信息、证照情况与发展建议</span>
             </div>
           </div>
           <div class="card-body">
-            <div style="display:grid;grid-template-columns:1.2fr 0.9fr;gap:8px;">
+            <div style="display:grid;grid-template-columns:1.15fr 0.95fr;gap:8px;align-items:flex-start;">
               <div>
-                <div style="font-size:12px;color:var(--text-sub);margin-bottom:2px;">培训历程</div>
-                <div id="trainingTimeline" class="timeline"></div>
+                <div style="font-size:12px;color:var(--text-sub);margin-bottom:2px;">
+                  个人基本信息与培训概览
+                </div>
+                <table id="personInfoTable" class="cert-table"></table>
               </div>
               <div>
-                <div style="font-size:12px;color:var(--text-sub);margin-bottom:2px;">发展路径</div>
-                <div id="devPath" class="dev-path"></div>
+                <div style="font-size:12px;color:var(--text-sub);margin-bottom:2px;">
+                  持证情况及发展分析
+                </div>
+                <div id="personDevSummary"
+                     style="font-size:11px;color:var(--text-sub);line-height:1.7;"></div>
               </div>
             </div>
           </div>
@@ -599,7 +685,7 @@
 
       <!-- 右列：岗位 & 系统视角 -->
       <section class="column">
-        <!-- 岗位技能对标图（替代矩阵热力图） -->
+        <!-- 岗位技能对标图 -->
         <article class="card">
           <div class="card-header">
             <div class="card-title">
@@ -621,7 +707,7 @@
           </div>
         </article>
 
-        <!-- 培训路径追踪 + 日常验证情况 -->
+        <!-- 培训路径追踪 + 日常验证问题 -->
         <article class="card soft">
           <div class="card-header">
             <div class="card-title">
@@ -629,15 +715,59 @@
               培训路径追踪
             </div>
             <div class="card-tools">
-              <span class="card-subtitle">各阶段完成率进度条 + 日常验证情况</span>
+              <span class="card-subtitle">岗位通用培训 + 岗位差异培训 · 2025</span>
+              <label style="margin-left:8px;font-size:12px;display:inline-flex;align-items:center;gap:4px;">
+                岗位：
+                <select id="roleTrainingSelect">
+                  <option value="intl-checkin" selected>国际值机</option>
+                  <option value="intl-service">国际服务</option>
+                  <option value="intl-sort">国际分拣</option>
+                  <option value="intl-check">国际行查</option>
+                </select>
+              </label>
             </div>
           </div>
           <div class="card-body">
-            <div id="trainingPathChart" class="chart"></div>
+            <!-- 岗位在册人数摘要 + 可点开弹窗 -->
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;font-size:12px;color:var(--text-sub);">
+              <div id="roleSummaryText"></div>
+              <span id="roleDetailBtn" class="pill" style="cursor:pointer;">
+                在册人员明细
+              </span>
+            </div>
 
+            <!-- 左右两块：岗位通用培训表 + 岗位差异培训折线柱状图 -->
+            <div style="display:grid;grid-template-columns:1.05fr 1.1fr;gap:8px;align-items:flex-start;margin-top:2px;">
+              <!-- 岗位通用培训表 -->
+              <div>
+                <div style="font-size:12px;color:var(--text-sub);margin-bottom:2px;">
+                  岗位通用培训（2025 年）
+                </div>
+                <table id="commonTrainingTable" class="cert-table">
+                  <thead>
+                    <tr>
+                      <th style="width:38px;">序号</th>
+                      <th>培训项目</th>
+                      <th style="width:70px;">场次</th>
+                      <th style="width:90px;">参训人次</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+
+              <!-- 岗位差异培训 -->
+              <div>
+                <div style="font-size:12px;color:var(--text-sub);margin-bottom:2px;">岗位差异培训（2025 年）</div>
+                <div id="trainingPathChart" class="chart"></div>
+                <div id="diffTrainingNote" style="font-size:11px;color:var(--text-sub);margin-top:-4px;"></div>
+              </div>
+            </div>
+
+            <!-- 日常验证问题（向上滚动） -->
             <div class="bottleneck-list">
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-                <span style="font-size:12px;">日常验证情况</span>
+                <span style="font-size:12px;">日常验证问题</span>
                 <span class="pill">现场抽查 · 即问即答</span>
               </div>
               <div id="bottleneckList"></div>
@@ -695,166 +825,2265 @@
     ];
 
     // 岗位技能等级（1-4：待培训/基础/熟练/精通）
-    // 按 positionsAll 顺序
     const skillMatrixLevels = [
-      // 国际值机员
-      [4, 3, 3, 3, 3, 3],
-      // 国际旅客服务员
-      [3, 2, 4, 4, 3, 3],
-      // 行李查验员
-      [2, 3, 2, 2, 2, 3],
-      // 行李分拣监管员（示例）
-      [2, 3, 2, 3, 2, 3],
-      // 行李分拣员（示例）
-      [2, 3, 1, 3, 1, 2]
+      [4, 3, 3, 3, 3, 3], // 国际值机员
+      [3, 2, 4, 4, 3, 3], // 国际旅客服务员
+      [2, 3, 2, 2, 2, 3], // 行李查验员
+      [2, 3, 2, 3, 2, 3], // 行李分拣监管员
+      [2, 3, 1, 3, 1, 2]  // 行李分拣员
     ];
 
-    const levelMap = {
-      1: "待培训",
-      2: "基础",
-      3: "熟练",
-      4: "精通"
+    const levelMap = { 1: "待培训", 2: "基础", 3: "熟练", 4: "精通" };
+
+    // 2025 岗位培训数据配置（国际值机为真实数据）
+    const roleTrainingConfig = {
+      "intl-checkin": {
+        key: "intl-checkin",
+        name: "国际值机",
+        year: 2025,
+        commonTrainings: [
+          { name: "上岗证复训",       sessions: 6, people: 26 },
+          { name: "上岗证初训",       sessions: 4, people: 5 },
+          { name: "危险品复训",       sessions: 4, people: 18 },
+          { name: "危险品初训",       sessions: 2, people: 3 },
+          { name: "航站楼准入复训",   sessions: 1, people: 40 },
+          { name: "飞行区准入复训",   sessions: 1, people: 40 },
+          { name: "安保培训",         sessions: 1, people: 40 }
+        ],
+        diffTrainings: [
+          { name: "KE业务培训", sessions: 21, peoplePerSession: 40 },
+          { name: "TR业务培训", sessions: 22, peoplePerSession: 40 },
+          { name: "AE业务培训", sessions: 3,  peoplePerSession: 40 },
+          { name: "CX业务培训", sessions: 71, peoplePerSession: 40 }
+        ],
+        transfer: ["华嘉慧", "叶和煌"],
+        back: ["任霞", "罗敏", "陈睿康"],
+        onDuty: [
+          "余博","李凌翔","李思颖","徐梦婷","陈烨","周芬","李婷","陈媛媛","刘静",
+          "谭源清","汪青城","李佳曼","陈瑞琦","刘淑怡","管心蕊","何紫嫣","刘航",
+          "颜如昕","胡润菲","李子怡","刘红","李上","张奇","董玲","秦雁","肖萍",
+          "叶琳","刘燕琼","严晓珂","肖潇","杨洁涵","黄海盈","刘翔","曾子卓","郭萌"
+        ]
+      },
+      "intl-service": { key: "intl-service", name: "国际服务", year: 2025 },
+      "intl-sort":    { key: "intl-sort",    name: "国际分拣", year: 2025 },
+      "intl-check":   { key: "intl-check",   name: "国际行查", year: 2025 }
     };
 
-    // 培训路径阶段汇总
-    const trainingStageSummary = [
-      { stage: "岗前培训", finished: 38, total: 40 },
-      { stage: "准入培训", finished: 35, total: 40 },
-      { stage: "岗位培训", finished: 29, total: 40 },
-      { stage: "业务提升", finished: 18, total: 36 },
-      { stage: "年度复训", finished: 12, total: 32 }
-    ];
-
-    // 日常验证问题示例
+    // 日常验证问题（文本已经按你给的改）
     const inspectItems = [
       {
-        level: "一般",
-        team: "值机分队",
-        content: "抽查司雨机场消防救援电话",
-        status: "知晓"
-      },
-      {
-        level: "一般",
-        team: "旅服分队",
-        content: "抽查邹亚玲“双热”疑似病例处置程序",
-        status: "知晓"
+        level: "重要",
+        team: "客运现场",
+        content:
+          "11月26日 现场抽查员工黄雪剑 TOC 电话，不知晓。<br/>" +
+          "【整改措施：对服务分队下发安全服务监察运营单，立整立改，全员互查常用电话，每日晨会随机抽查，当事人当月绩效扣 1 分，科室拟于次月验证。】",
+        status: "不知晓"
       },
       {
         level: "重要",
         team: "客运现场",
-        content: "抽查张三、李四双机位廊桥登机的注意事项",
-        status: "不知晓"
+        content:
+          "发现问题：11月26日 现场检查值机 H 岛头电脑无人值守期间未熄屏、锁屏未设置密码的问题。<br/>" +
+          "整改措施：立整立改，再次全员宣贯，责任落实到人，强化日常监察，严格执行“人离锁屏”管理要求，设置锁屏密码。",
+        status: "问题"
+      },
+      {
+        level: "一般",
+        team: "值机分队",
+        content:
+          "12月3日 抽查值机员严晓珂、肖萍、黄海盈、罗敏《离港系统故障特情处置》，知晓。",
+        status: "知晓"
+      },
+      {
+        level: "一般",
+        team: "值机分队",
+        content:
+          "12月2日 抽查值机员刘静、陈烨、汪青城、李婷《国际值机三超行李服务话术》话术，知晓。",
+        status: "知晓"
+      },
+      {
+        level: "一般",
+        team: "值机分队",
+        content:
+          "12月1日 抽查华嘉慧、叶琳、张奇、秦雁“自愿上报二维码”程序，知晓。",
+        status: "知晓"
       }
     ];
 
-    // 员工一人一档示例数据
-    const employees = [
+    // 员工一人一档数据
+const employees = [
+  {
+    "id": "emp-1",
+    "name": "余博",
+    "position": "国际值机分队长",
+    "rank": "在岗",
+    "hireDate": "2008-06-01",
+    "pathTag": "余博 当前在岗，2025 年国际值机员通用培训档案已纳入统计，可结合右侧“培训路径追踪”查看整体场次和频次。",
+    "phone": "15927311252",
+    "team": "A/B组",
+    "badge": "BKA0406",
+    "languageLevel": "CET3",
+    "remark": "唱歌",
+    "skills": {
+      "值机操作": 4,
+      "行李托运": 3,
+      "特殊旅客服务": 3,
+      "中转衔接": 3,
+      "英语沟通": 3,
+      "不正常航班处置": 3
+    },
+    "trainings": [
       {
-        id: "emp-zhangsan",
-        name: "张三",
-        position: "国际值机员",
-        rank: "班组长",
-        hireDate: "2022-03-15",
-        pathTag: "值机主力骨干，适合作为新人“师傅”，可承担重点航班首班任务。",
-        // 调整为基本达到岗位目标
-        skills: {
-          "值机操作": 4,
-          "行李托运": 3,
-          "特殊旅客服务": 3,
-          "中转衔接": 3,
-          "英语沟通": 3,
-          "不正常航班处置": 3
-        },
-        trainings: [
-          { date: "2022-04-05", course: "国际值机员初训", score: 88, result: "合格" },
-          { date: "2023-03-20", course: "危险品基础知识复训", score: 84, result: "合格" },
-          { date: "2024-06-12", course: "不正常航班现场处置", score: 80, result: "合格" },
-          { date: "2025-03-01", course: "机场实用英语·国际值机场景", score: 91, result: "优秀" }
-        ],
-        development: {
-          finished: ["岗前培训", "准入培训", "岗位培训"],
-          pending: ["业务提升模块（高级值机排故）", "2025 年度复训"]
-        },
-        certificates: [
-          { name: "上岗证", expireDate: "2026-02-01" },
-          { name: "航站楼准入证", expireDate: "2025-12-25" },
-          { name: "飞行区准入证", expireDate: "2025-11-25" },
-          { name: "危险品证", expireDate: "2024-12-01" }
-        ]
-      },
-      {
-        id: "emp-lisi",
-        name: "李四",
-        position: "国际旅客服务员",
-        rank: "骨干",
-        hireDate: "2021-08-01",
-        pathTag: "特殊旅客与中转服务专家，可作为复杂航班和重点旅客航班的“责任人”。",
-        skills: {
-          "值机操作": 3,
-          "行李托运": 2,
-          "特殊旅客服务": 4,
-          "中转衔接": 4,
-          "英语沟通": 3,
-          "不正常航班处置": 3
-        },
-        trainings: [
-          { date: "2021-09-10", course: "国际旅客服务员初训", score: 92, result: "优秀" },
-          { date: "2022-07-15", course: "特殊旅客服务与沟通技巧", score: 90, result: "优秀" },
-          { date: "2023-10-02", course: "不正常航班旅客安抚与分流", score: 85, result: "合格" },
-          { date: "2024-11-18", course: "国际中转旅客保障流程优化", score: 88, result: "合格" }
-        ],
-        development: {
-          finished: ["岗前培训", "准入培训", "岗位培训", "业务提升"],
-          pending: ["2025 年度复训"]
-        },
-        certificates: [
-          { name: "上岗证", expireDate: "2025-12-15" },
-          { name: "航站楼准入证", expireDate: "2025-12-20" },
-          { name: "危险品证", expireDate: "2026-04-30" }
-        ]
-      },
-      {
-        id: "emp-wangwu",
-        name: "王五",
-        position: "行李查验员",
-        rank: "新员工",
-        hireDate: "2024-09-05",
-        pathTag: "行李查验新人，危险品识别和异常件处置能力稳步提升中。",
-        skills: {
-          "值机操作": 2,
-          "行李托运": 3,
-          "特殊旅客服务": 2,
-          "中转衔接": 2,
-          "英语沟通": 2,
-          "不正常航班处置": 3
-        },
-        trainings: [
-          { date: "2024-09-20", course: "新员工岗前培训（通用）", score: 86, result: "合格" },
-          { date: "2024-10-11", course: "行李查验基础技能", score: 81, result: "合格" },
-          { date: "2025-01-15", course: "危险品识别与行李安全", score: 78, result: "合格" }
-        ],
-        development: {
-          finished: ["岗前培训", "准入培训"],
-          pending: ["岗位培训（高级查验技能）", "业务提升模块", "2025 年度复训"]
-        },
-        certificates: [
-          { name: "上岗证", expireDate: "2025-08-31" },
-          { name: "航站楼准入证", expireDate: "2025-09-30" },
-          { name: "危险品证", expireDate: "2025-10-15" }
-        ]
+        "date": "2008-06-01",
+        "course": "2025 年个人培训档案已汇总（详见部门级看板）",
+        "score": 0,
+        "result": "—"
       }
-    ];
+    ],
+    "development": {
+      "finished": [
+        "岗前培训",
+        "准入培训",
+        "岗位培训"
+      ],
+      "pending": [
+        "业务提升模块",
+        "2025 年度复训"
+      ]
+    },
+    "certificates": [
+      {
+        "name": "危险品证书(D类)",
+        "certNo": "HBA-N-2940",
+        "issueDate": "2024-06-26",
+        "expireDate": "2026-06-25"
+      },
+      {
+        "name": "值机岗位合格证书",
+        "certNo": "2018-345",
+        "issueDate": "2023-03-01",
+        "expireDate": "2026-05-01"
+      }
+    ]
+  },
+  {
+    "id": "emp-2",
+    "name": "李凌翔",
+    "position": "国际值机分队长",
+    "rank": "在岗",
+    "hireDate": "2017-06-01",
+    "pathTag": "李凌翔 当前在岗，2025 年国际值机员通用培训档案已纳入统计，可结合右侧“培训路径追踪”查看整体场次和频次。",
+    "phone": "18971206889",
+    "team": "B组",
+    "badge": "BKB0557",
+    "languageLevel": "CET4",
+    "remark": "唱歌",
+    "skills": {
+      "值机操作": 4,
+      "行李托运": 3,
+      "特殊旅客服务": 3,
+      "中转衔接": 3,
+      "英语沟通": 3,
+      "不正常航班处置": 3
+    },
+    "trainings": [
+      {
+        "date": "2017-06-01",
+        "course": "2025 年个人培训档案已汇总（详见部门级看板）",
+        "score": 0,
+        "result": "—"
+      }
+    ],
+    "development": {
+      "finished": [
+        "岗前培训",
+        "准入培训",
+        "岗位培训"
+      ],
+      "pending": [
+        "业务提升模块",
+        "2025 年度复训"
+      ]
+    },
+    "certificates": [
+      {
+        "name": "危险品证书(D类)",
+        "certNo": "HBA-N-2099",
+        "issueDate": "2021-06-25",
+        "expireDate": "2027-06-24"
+      },
+      {
+        "name": "值机员岗位合格证书",
+        "certNo": "2021-004",
+        "issueDate": "2023-03-01",
+        "expireDate": "2026-05-01"
+      }
+    ]
+  },
+  {
+    "id": "emp-3",
+    "name": "李思颖",
+    "position": "国际值机班组长",
+    "rank": "在岗",
+    "hireDate": "2017-06-01",
+    "pathTag": "李思颖 当前在岗，2025 年国际值机员通用培训档案已纳入统计，可结合右侧“培训路径追踪”查看整体场次和频次。",
+    "phone": "15907120957",
+    "team": "B组",
+    "badge": "BKB0630",
+    "languageLevel": "CET4",
+    "remark": "唱歌、跳舞",
+    "skills": {
+      "值机操作": 4,
+      "行李托运": 3,
+      "特殊旅客服务": 3,
+      "中转衔接": 3,
+      "英语沟通": 3,
+      "不正常航班处置": 3
+    },
+    "trainings": [
+      {
+        "date": "2017-06-01",
+        "course": "2025 年个人培训档案已汇总（详见部门级看板）",
+        "score": 0,
+        "result": "—"
+      }
+    ],
+    "development": {
+      "finished": [
+        "岗前培训",
+        "准入培训",
+        "岗位培训"
+      ],
+      "pending": [
+        "业务提升模块",
+        "2025 年度复训"
+      ]
+    },
+    "certificates": [
+      {
+        "name": "危险品证书(D类)",
+        "certNo": "HBA-N-2096",
+        "issueDate": "2021-06-25",
+        "expireDate": "2027-06-24"
+      },
+      {
+        "name": "值机员岗位合格证书",
+        "certNo": "2017-090",
+        "issueDate": "2023-02-01",
+        "expireDate": "2026-05-01"
+      }
+    ]
+  },
+  {
+    "id": "emp-4",
+    "name": "徐梦婷",
+    "position": "国际值机员",
+    "rank": "在岗",
+    "hireDate": "2013-06-01",
+    "pathTag": "徐梦婷 当前在岗，2025 年国际值机员通用培训档案已纳入统计，可结合右侧“培训路径追踪”查看整体场次和频次。",
+    "phone": "18571514728",
+    "team": "B组",
+    "badge": "BKC0190",
+    "languageLevel": "CET4",
+    "remark": "唱歌、跳舞",
+    "skills": {
+      "值机操作": 4,
+      "行李托运": 3,
+      "特殊旅客服务": 3,
+      "中转衔接": 3,
+      "英语沟通": 3,
+      "不正常航班处置": 3
+    },
+    "trainings": [
+      {
+        "date": "2013-06-01",
+        "course": "2025 年个人培训档案已汇总（详见部门级看板）",
+        "score": 0,
+        "result": "—"
+      }
+    ],
+    "development": {
+      "finished": [
+        "岗前培训",
+        "准入培训",
+        "岗位培训"
+      ],
+      "pending": [
+        "业务提升模块",
+        "2025 年度复训"
+      ]
+    },
+    "certificates": [
+      {
+        "name": "危险品证书(D类)",
+        "certNo": "HBA-N-1444",
+        "issueDate": "2023-09-22",
+        "expireDate": "2027-03-15"
+      },
+      {
+        "name": "值机员岗位合格证书",
+        "certNo": "2016-018",
+        "issueDate": "2023-07-01",
+        "expireDate": "2026-07-01"
+      }
+    ]
+  },
+  {
+    "id": "emp-5",
+    "name": "陈烨",
+    "position": "国际值机员",
+    "rank": "在岗",
+    "hireDate": "2000-08-01",
+    "pathTag": "陈烨 当前在岗，2025 年国际值机员通用培训档案已纳入统计，可结合右侧“培训路径追踪”查看整体场次和频次。",
+    "phone": "18062608980",
+    "team": "B组",
+    "badge": "BKC0082",
+    "languageLevel": "CET4",
+    "remark": "唱歌、跳舞等",
+    "skills": {
+      "值机操作": 4,
+      "行李托运": 3,
+      "特殊旅客服务": 3,
+      "中转衔接": 3,
+      "英语沟通": 3,
+      "不正常航班处置": 3
+    },
+    "trainings": [
+      {
+        "date": "2000-08-01",
+        "course": "2025 年个人培训档案已汇总（详见部门级看板）",
+        "score": 0,
+        "result": "—"
+      }
+    ],
+    "development": {
+      "finished": [
+        "岗前培训",
+        "准入培训",
+        "岗位培训"
+      ],
+      "pending": [
+        "业务提升模块",
+        "2025 年度复训"
+      ]
+    },
+    "certificates": [
+      {
+        "name": "危险品证书(D类)",
+        "certNo": "HBA-N-0811",
+        "issueDate": "2020-08-25",
+        "expireDate": "2026-08-24"
+      },
+      {
+        "name": "值机员岗位合格证书",
+        "certNo": "2013-054",
+        "issueDate": "2023-08-01",
+        "expireDate": "2026-07-01"
+      }
+    ]
+  },
+  {
+    "id": "emp-6",
+    "name": "周芬",
+    "position": "国际值机员",
+    "rank": "在岗",
+    "hireDate": "2004-08-01",
+    "pathTag": "周芬 当前在岗，2025 年国际值机员通用培训档案已纳入统计，可结合右侧“培训路径追踪”查看整体场次和频次。",
+    "phone": "13871397820",
+    "team": "B组",
+    "badge": "BKC0041",
+    "languageLevel": "CET2",
+    "remark": "唱歌、跳舞等",
+    "skills": {
+      "值机操作": 4,
+      "行李托运": 3,
+      "特殊旅客服务": 3,
+      "中转衔接": 3,
+      "英语沟通": 3,
+      "不正常航班处置": 3
+    },
+    "trainings": [
+      {
+        "date": "2004-08-01",
+        "course": "2025 年个人培训档案已汇总（详见部门级看板）",
+        "score": 0,
+        "result": "—"
+      }
+    ],
+    "development": {
+      "finished": [
+        "岗前培训",
+        "准入培训",
+        "岗位培训"
+      ],
+      "pending": [
+        "业务提升模块",
+        "2025 年度复训"
+      ]
+    },
+    "certificates": [
+      {
+        "name": "危险品证书(D类)",
+        "certNo": "HBA-N-0733",
+        "issueDate": "2020-08-25",
+        "expireDate": "2026-08-24"
+      },
+      {
+        "name": "值机员岗位合格证书",
+        "certNo": "2012-044",
+        "issueDate": "2023-05-01",
+        "expireDate": "2026-05-01"
+      }
+    ]
+  },
+  {
+    "id": "emp-7",
+    "name": "李婷",
+    "position": "国际值机员",
+    "rank": "在岗",
+    "hireDate": "2012-03-01",
+    "pathTag": "李婷 当前在岗，2025 年国际值机员通用培训档案已纳入统计，可结合右侧“培训路径追踪”查看整体场次和频次。",
+    "phone": "15071000852",
+    "team": "B组",
+    "badge": "BKC0230",
+    "languageLevel": "CET4",
+    "remark": "无",
+    "skills": {
+      "值机操作": 4,
+      "行李托运": 3,
+      "特殊旅客服务": 3,
+      "中转衔接": 3,
+      "英语沟通": 3,
+      "不正常航班处置": 3
+    },
+    "trainings": [
+      {
+        "date": "2012-03-01",
+        "course": "2025 年个人培训档案已汇总（详见部门级看板）",
+        "score": 0,
+        "result": "—"
+      }
+    ],
+    "development": {
+      "finished": [
+        "岗前培训",
+        "准入培训",
+        "岗位培训"
+      ],
+      "pending": [
+        "业务提升模块",
+        "2025 年度复训"
+      ]
+    },
+    "certificates": [
+      {
+        "name": "危险品证书(D类)",
+        "certNo": "HBA-N-0369",
+        "issueDate": "2023-09-22",
+        "expireDate": "2027-08-24"
+      },
+      {
+        "name": "值机员岗位合格证书",
+        "certNo": "2011-053",
+        "issueDate": "2024-11-01",
+        "expireDate": "2026-11-01"
+      }
+    ]
+  },
+  {
+    "id": "emp-8",
+    "name": "陈媛媛",
+    "position": "国际值机员",
+    "rank": "在岗",
+    "hireDate": "2007-08-01",
+    "pathTag": "陈媛媛 当前在岗，2025 年国际值机员通用培训档案已纳入统计，可结合右侧“培训路径追踪”查看整体场次和频次。",
+    "phone": "13396013655",
+    "team": "B组",
+    "badge": "BKC0145",
+    "languageLevel": "CET4",
+    "remark": "无",
+    "skills": {
+      "值机操作": 4,
+      "行李托运": 3,
+      "特殊旅客服务": 3,
+      "中转衔接": 3,
+      "英语沟通": 3,
+      "不正常航班处置": 3
+    },
+    "trainings": [
+      {
+        "date": "2007-08-01",
+        "course": "2025 年个人培训档案已汇总（详见部门级看板）",
+        "score": 0,
+        "result": "—"
+      }
+    ],
+    "development": {
+      "finished": [
+        "岗前培训",
+        "准入培训",
+        "岗位培训"
+      ],
+      "pending": [
+        "业务提升模块",
+        "2025 年度复训"
+      ]
+    },
+    "certificates": [
+      {
+        "name": "危险品证书(D类)",
+        "certNo": "HBA-N-3314",
+        "issueDate": "2023-03-15",
+        "expireDate": "2027-03-14"
+      },
+      {
+        "name": "值机员岗位合格证书",
+        "certNo": "2011-010",
+        "issueDate": "2024-11-01",
+        "expireDate": "2026-11-01"
+      }
+    ]
+  },
+  {
+    "id": "emp-9",
+    "name": "刘静",
+    "position": "国际值机员",
+    "rank": "在岗",
+    "hireDate": "2012-08-01",
+    "pathTag": "刘静 当前在岗，2025 年国际值机员通用培训档案已纳入统计，可结合右侧“培训路径追踪”查看整体场次和频次。",
+    "phone": "18202790512",
+    "team": "B组",
+    "badge": "BKC0233",
+    "languageLevel": "CET4",
+    "remark": "唱歌、瑜伽",
+    "skills": {
+      "值机操作": 4,
+      "行李托运": 3,
+      "特殊旅客服务": 3,
+      "中转衔接": 3,
+      "英语沟通": 3,
+      "不正常航班处置": 3
+    },
+    "trainings": [
+      {
+        "date": "2012-08-01",
+        "course": "2025 年个人培训档案已汇总（详见部门级看板）",
+        "score": 0,
+        "result": "—"
+      }
+    ],
+    "development": {
+      "finished": [
+        "岗前培训",
+        "准入培训",
+        "岗位培训"
+      ],
+      "pending": [
+        "业务提升模块",
+        "2025 年度复训"
+      ]
+    },
+    "certificates": [
+      {
+        "name": "危险品证书(D类)",
+        "certNo": "HBA-N-0684",
+        "issueDate": "2019-09-04",
+        "expireDate": "2025-09-03"
+      },
+      {
+        "name": "值机员岗位合格证书",
+        "certNo": "2012-045",
+        "issueDate": "2019-12-01",
+        "expireDate": "2025-12-01"
+      }
+    ]
+  },
+  {
+    "id": "emp-10",
+    "name": "谭源清",
+    "position": "国际值机员",
+    "rank": "在岗",
+    "hireDate": "2016-08-01",
+    "pathTag": "谭源清 当前在岗，2025 年国际值机员通用培训档案已纳入统计，可结合右侧“培训路径追踪”查看整体场次和频次。",
+    "phone": "13554011709",
+    "team": "B组",
+    "badge": "BKC0307",
+    "languageLevel": "CET4",
+    "remark": "唱歌、购物",
+    "skills": {
+      "值机操作": 4,
+      "行李托运": 3,
+      "特殊旅客服务": 3,
+      "中转衔接": 3,
+      "英语沟通": 3,
+      "不正常航班处置": 3
+    },
+    "trainings": [
+      {
+        "date": "2016-08-01",
+        "course": "2025 年个人培训档案已汇总（详见部门级看板）",
+        "score": 0,
+        "result": "—"
+      }
+    ],
+    "development": {
+      "finished": [
+        "岗前培训",
+        "准入培训",
+        "岗位培训"
+      ],
+      "pending": [
+        "业务提升模块",
+        "2025 年度复训"
+      ]
+    },
+    "certificates": [
+      {
+        "name": "危险品证书(D类)",
+        "certNo": "HBA-N-0759",
+        "issueDate": "2021-06-09",
+        "expireDate": "2027-06-08"
+      },
+      {
+        "name": "值机员岗位合格证书",
+        "certNo": "2016-093",
+        "issueDate": "2024-11-01",
+        "expireDate": "2026-11-01"
+      }
+    ]
+  },
+  {
+    "id": "emp-11",
+    "name": "汪青城",
+    "position": "国际值机员",
+    "rank": "在岗",
+    "hireDate": "2019-09-01",
+    "pathTag": "汪青城 当前在岗，2025 年国际值机员通用培训档案已纳入统计，可结合右侧“培训路径追踪”查看整体场次和频次。",
+    "phone": "13397132446",
+    "team": "B组",
+    "badge": "BKC0360",
+    "languageLevel": "CET4",
+    "remark": "无；2025.11.20已参加复训等回证",
+    "skills": {
+      "值机操作": 4,
+      "行李托运": 3,
+      "特殊旅客服务": 3,
+      "中转衔接": 3,
+      "英语沟通": 3,
+      "不正常航班处置": 3
+    },
+    "trainings": [
+      {
+        "date": "2019-09-01",
+        "course": "2025 年个人培训档案已汇总（详见部门级看板）",
+        "score": 0,
+        "result": "—"
+      }
+    ],
+    "development": {
+      "finished": [
+        "岗前培训",
+        "准入培训",
+        "岗位培训"
+      ],
+      "pending": [
+        "业务提升模块",
+        "2025 年度复训"
+      ]
+    },
+    "certificates": [
+      {
+        "name": "危险品证书(D类)",
+        "certNo": "HBA-N-1178",
+        "issueDate": "2021-12-30",
+        "expireDate": "2027-12-29"
+      },
+      {
+        "name": "值机员岗位合格证书",
+        "certNo": "2019-141",
+        "issueDate": "2024-04-01",
+        "expireDate": "2026-04-01"
+      }
+    ]
+  },
+  {
+    "id": "emp-12",
+    "name": "李佳曼",
+    "position": "国际值机员",
+    "rank": "在岗",
+    "hireDate": "2018-06-01",
+    "pathTag": "李佳曼 当前在岗，2025 年国际值机员通用培训档案已纳入统计，可结合右侧“培训路径追踪”查看整体场次和频次。",
+    "phone": "15527992988",
+    "team": "B组",
+    "badge": "BKC0351",
+    "languageLevel": "CET4",
+    "remark": "旅游、健身、看书；2025.11.20已参加复训等回证",
+    "skills": {
+      "值机操作": 4,
+      "行李托运": 3,
+      "特殊旅客服务": 3,
+      "中转衔接": 3,
+      "英语沟通": 3,
+      "不正常航班处置": 3
+    },
+    "trainings": [
+      {
+        "date": "2018-06-01",
+        "course": "2025 年个人培训档案已汇总（详见部门级看板）",
+        "score": 0,
+        "result": "—"
+      }
+    ],
+    "development": {
+      "finished": [
+        "岗前培训",
+        "准入培训",
+        "岗位培训"
+      ],
+      "pending": [
+        "业务提升模块",
+        "2025 年度复训"
+      ]
+    },
+    "certificates": [
+      {
+        "name": "危险品证书(D类)",
+        "certNo": "HBA-N-0845",
+        "issueDate": "2022-06-16",
+        "expireDate": "2028-06-15"
+      },
+      {
+        "name": "值机员岗位合格证书",
+        "certNo": "2018-297",
+        "issueDate": "2023-05-01",
+        "expireDate": "2026-05-01"
+      }
+    ]
+  },
+  {
+    "id": "emp-13",
+    "name": "陈瑞琦",
+    "position": "国际值机员",
+    "rank": "在岗",
+    "hireDate": "2018-06-01",
+    "pathTag": "陈瑞琦 当前在岗，2025 年国际值机员通用培训档案已纳入统计，可结合右侧“培训路径追踪”查看整体场次和频次。",
+    "phone": "18986386902",
+    "team": "B组",
+    "badge": "BKC0362",
+    "languageLevel": "CET4",
+    "remark": "旅游、健身；2025.11.20已参加复训等回证",
+    "skills": {
+      "值机操作": 4,
+      "行李托运": 3,
+      "特殊旅客服务": 3,
+      "中转衔接": 3,
+      "英语沟通": 3,
+      "不正常航班处置": 3
+    },
+    "trainings": [
+      {
+        "date": "2018-06-01",
+        "course": "2025 年个人培训档案已汇总（详见部门级看板）",
+        "score": 0,
+        "result": "—"
+      }
+    ],
+    "development": {
+      "finished": [
+        "岗前培训",
+        "准入培训",
+        "岗位培训"
+      ],
+      "pending": [
+        "业务提升模块",
+        "2025 年度复训"
+      ]
+    },
+    "certificates": [
+      {
+        "name": "危险品证书(D类)",
+        "certNo": "HBA-N-0995",
+        "issueDate": "2022-06-16",
+        "expireDate": "2028-06-15"
+      },
+      {
+        "name": "值机员岗位合格证书",
+        "certNo": "2018-336",
+        "issueDate": "2023-05-01",
+        "expireDate": "2025-05-01"
+      }
+    ]
+  },
+  {
+    "id": "emp-14",
+    "name": "刘淑怡",
+    "position": "国际值机员",
+    "rank": "在岗",
+    "hireDate": "2019-12-01",
+    "pathTag": "刘淑怡 当前在岗，2025 年国际值机员通用培训档案已纳入统计，可结合右侧“培训路径追踪”查看整体场次和频次。",
+    "phone": "17740656810",
+    "team": "B组",
+    "badge": "BKC0375",
+    "languageLevel": "CET4",
+    "remark": "旅游、健身、看书",
+    "skills": {
+      "值机操作": 4,
+      "行李托运": 3,
+      "特殊旅客服务": 3,
+      "中转衔接": 3,
+      "英语沟通": 3,
+      "不正常航班处置": 3
+    },
+    "trainings": [
+      {
+        "date": "2019-12-01",
+        "course": "2025 年个人培训档案已汇总（详见部门级看板）",
+        "score": 0,
+        "result": "—"
+      }
+    ],
+    "development": {
+      "finished": [
+        "岗前培训",
+        "准入培训",
+        "岗位培训"
+      ],
+      "pending": [
+        "业务提升模块",
+        "2025 年度复训"
+      ]
+    },
+    "certificates": [
+      {
+        "name": "危险品证书(D类)",
+        "certNo": "HBA-N-1179",
+        "issueDate": "2020-08-25",
+        "expireDate": "2026-08-24"
+      },
+      {
+        "name": "值机员岗位合格证书",
+        "certNo": "2019-199",
+        "issueDate": "2023-07-01",
+        "expireDate": "2026-07-01"
+      }
+    ]
+  },
+  {
+    "id": "emp-15",
+    "name": "管心蕊",
+    "position": "国际值机员",
+    "rank": "在岗",
+    "hireDate": "2021-08-01",
+    "pathTag": "管心蕊 当前在岗，2025 年国际值机员通用培训档案已纳入统计，可结合右侧“培训路径追踪”查看整体场次和频次。",
+    "phone": "18327860679",
+    "team": "B组",
+    "badge": "BKC1491",
+    "languageLevel": "CET4",
+    "remark": "旅游、健身、看书",
+    "skills": {
+      "值机操作": 4,
+      "行李托运": 3,
+      "特殊旅客服务": 3,
+      "中转衔接": 3,
+      "英语沟通": 3,
+      "不正常航班处置": 3
+    },
+    "trainings": [
+      {
+        "date": "2021-08-01",
+        "course": "2025 年个人培训档案已汇总（详见部门级看板）",
+        "score": 0,
+        "result": "—"
+      }
+    ],
+    "development": {
+      "finished": [
+        "岗前培训",
+        "准入培训",
+        "岗位培训"
+      ],
+      "pending": [
+        "业务提升模块",
+        "2025 年度复训"
+      ]
+    },
+    "certificates": [
+      {
+        "name": "危险品证书(D类)",
+        "certNo": "HBA-N-1925",
+        "issueDate": "2021-06-09",
+        "expireDate": "2027-06-08"
+      },
+      {
+        "name": "值机员岗位合格证书",
+        "certNo": "2021-104",
+        "issueDate": "2023-05-01",
+        "expireDate": "2026-05-01"
+      }
+    ]
+  },
+  {
+    "id": "emp-16",
+    "name": "何紫嫣",
+    "position": "国际值机员",
+    "rank": "在岗",
+    "hireDate": "2021-08-01",
+    "pathTag": "何紫嫣 当前在岗，2025 年国际值机员通用培训档案已纳入统计，可结合右侧“培训路径追踪”查看整体场次和频次。",
+    "phone": "18407176351",
+    "team": "B组",
+    "badge": "BKC1495",
+    "languageLevel": "CET4",
+    "remark": "旅游、健身、看书",
+    "skills": {
+      "值机操作": 4,
+      "行李托运": 3,
+      "特殊旅客服务": 3,
+      "中转衔接": 3,
+      "英语沟通": 3,
+      "不正常航班处置": 3
+    },
+    "trainings": [
+      {
+        "date": "2021-08-01",
+        "course": "2025 年个人培训档案已汇总（详见部门级看板）",
+        "score": 0,
+        "result": "—"
+      }
+    ],
+    "development": {
+      "finished": [
+        "岗前培训",
+        "准入培训",
+        "岗位培训"
+      ],
+      "pending": [
+        "业务提升模块",
+        "2025 年度复训"
+      ]
+    },
+    "certificates": [
+      {
+        "name": "危险品证书(D类)",
+        "certNo": "HBA-N-1926",
+        "issueDate": "2021-06-09",
+        "expireDate": "2027-06-08"
+      },
+      {
+        "name": "值机员岗位合格证书",
+        "certNo": "2021-105",
+        "issueDate": "2023-05-01",
+        "expireDate": "2026-05-01"
+      }
+    ]
+  },
+  {
+    "id": "emp-17",
+    "name": "刘航",
+    "position": "国际值机员",
+    "rank": "在岗",
+    "hireDate": "2023-02-01",
+    "pathTag": "刘航 当前在岗，2025 年国际值机员通用培训档案已纳入统计，可结合右侧“培训路径追踪”查看整体场次和频次。",
+    "phone": "13101778303",
+    "team": "B组",
+    "badge": "BKC1517",
+    "languageLevel": "CET4",
+    "remark": "旅游、健身、看书",
+    "skills": {
+      "值机操作": 4,
+      "行李托运": 3,
+      "特殊旅客服务": 3,
+      "中转衔接": 3,
+      "英语沟通": 3,
+      "不正常航班处置": 3
+    },
+    "trainings": [
+      {
+        "date": "2023-02-01",
+        "course": "2025 年个人培训档案已汇总（详见部门级看板）",
+        "score": 0,
+        "result": "—"
+      }
+    ],
+    "development": {
+      "finished": [
+        "岗前培训",
+        "准入培训",
+        "岗位培训"
+      ],
+      "pending": [
+        "业务提升模块",
+        "2025 年度复训"
+      ]
+    },
+    "certificates": [
+      {
+        "name": "危险品证书(D类)",
+        "certNo": "HBA-N-2177",
+        "issueDate": "2023-02-10",
+        "expireDate": "2029-02-09"
+      },
+      {
+        "name": "值机员岗位合格证书",
+        "certNo": "2023-056",
+        "issueDate": "2023-05-01",
+        "expireDate": "2026-05-01"
+      }
+    ]
+  },
+  {
+    "id": "emp-18",
+    "name": "颜如昕",
+    "position": "国际值机员",
+    "rank": "在岗",
+    "hireDate": "2023-02-01",
+    "pathTag": "颜如昕 当前在岗，2025 年国际值机员通用培训档案已纳入统计，可结合右侧“培训路径追踪”查看整体场次和频次。",
+    "phone": "15697112980",
+    "team": "B组",
+    "badge": "BKC1519",
+    "languageLevel": "CET4",
+    "remark": "旅游、健身、看书",
+    "skills": {
+      "值机操作": 4,
+      "行李托运": 3,
+      "特殊旅客服务": 3,
+      "中转衔接": 3,
+      "英语沟通": 3,
+      "不正常航班处置": 3
+    },
+    "trainings": [
+      {
+        "date": "2023-02-01",
+        "course": "2025 年个人培训档案已汇总（详见部门级看板）",
+        "score": 0,
+        "result": "—"
+      }
+    ],
+    "development": {
+      "finished": [
+        "岗前培训",
+        "准入培训",
+        "岗位培训"
+      ],
+      "pending": [
+        "业务提升模块",
+        "2025 年度复训"
+      ]
+    },
+    "certificates": [
+      {
+        "name": "危险品证书(D类)",
+        "certNo": "HBA-N-2178",
+        "issueDate": "2023-02-10",
+        "expireDate": "2029-02-09"
+      },
+      {
+        "name": "值机员岗位合格证书",
+        "certNo": "2023-057",
+        "issueDate": "2023-05-01",
+        "expireDate": "2026-05-01"
+      }
+    ]
+  },
+  {
+    "id": "emp-19",
+    "name": "胡润菲",
+    "position": "国际值机员",
+    "rank": "在岗",
+    "hireDate": "2019-12-01",
+    "pathTag": "胡润菲 当前在岗，2025 年国际值机员通用培训档案已纳入统计，可结合右侧“培训路径追踪”查看整体场次和频次。",
+    "phone": "18271275162",
+    "team": "B组",
+    "badge": "BKC0374",
+    "languageLevel": "CET4",
+    "remark": "旅游、健身、看书",
+    "skills": {
+      "值机操作": 4,
+      "行李托运": 3,
+      "特殊旅客服务": 3,
+      "中转衔接": 3,
+      "英语沟通": 3,
+      "不正常航班处置": 3
+    },
+    "trainings": [
+      {
+        "date": "2019-12-01",
+        "course": "2025 年个人培训档案已汇总（详见部门级看板）",
+        "score": 0,
+        "result": "—"
+      }
+    ],
+    "development": {
+      "finished": [
+        "岗前培训",
+        "准入培训",
+        "岗位培训"
+      ],
+      "pending": [
+        "业务提升模块",
+        "2025 年度复训"
+      ]
+    },
+    "certificates": [
+      {
+        "name": "危险品证书(D类)",
+        "certNo": "HBA-N-1180",
+        "issueDate": "2019-09-04",
+        "expireDate": "2025-09-03"
+      },
+      {
+        "name": "值机员岗位合格证书",
+        "certNo": "2019-202",
+        "issueDate": "2023-07-01",
+        "expireDate": "2026-07-01"
+      }
+    ]
+  },
+  {
+    "id": "emp-20",
+    "name": "李子怡",
+    "position": "国际值机员",
+    "rank": "在岗",
+    "hireDate": "2019-12-01",
+    "pathTag": "李子怡 当前在岗，2025 年国际值机员通用培训档案已纳入统计，可结合右侧“培训路径追踪”查看整体场次和频次。",
+    "phone": "18727532016",
+    "team": "B组",
+    "badge": "BKC1514",
+    "languageLevel": "CET4",
+    "remark": "旅游、健身、看书",
+    "skills": {
+      "值机操作": 4,
+      "行李托运": 3,
+      "特殊旅客服务": 3,
+      "中转衔接": 3,
+      "英语沟通": 3,
+      "不正常航班处置": 3
+    },
+    "trainings": [
+      {
+        "date": "2019-12-01",
+        "course": "2025 年个人培训档案已汇总（详见部门级看板）",
+        "score": 0,
+        "result": "—"
+      }
+    ],
+    "development": {
+      "finished": [
+        "岗前培训",
+        "准入培训",
+        "岗位培训"
+      ],
+      "pending": [
+        "业务提升模块",
+        "2025 年度复训"
+      ]
+    },
+    "certificates": [
+      {
+        "name": "危险品证书(D类)",
+        "certNo": "HBA-N-1181",
+        "issueDate": "2019-09-04",
+        "expireDate": "2025-09-03"
+      },
+      {
+        "name": "值机员岗位合格证书",
+        "certNo": "2019-197",
+        "issueDate": "2023-07-01",
+        "expireDate": "2026-07-01"
+      }
+    ]
+  },
+  {
+    "id": "emp-21",
+    "name": "刘红",
+    "position": "国际值机员",
+    "rank": "在岗",
+    "hireDate": "2019-12-01",
+    "pathTag": "刘红 当前在岗，2025 年国际值机员通用培训档案已纳入统计，可结合右侧“培训路径追踪”查看整体场次和频次。",
+    "phone": "15927579926",
+    "team": "B组",
+    "badge": "BKC1515",
+    "languageLevel": "CET4",
+    "remark": "旅游、健身、看书",
+    "skills": {
+      "值机操作": 4,
+      "行李托运": 3,
+      "特殊旅客服务": 3,
+      "中转衔接": 3,
+      "英语沟通": 3,
+      "不正常航班处置": 3
+    },
+    "trainings": [
+      {
+        "date": "2019-12-01",
+        "course": "2025 年个人培训档案已汇总（详见部门级看板）",
+        "score": 0,
+        "result": "—"
+      }
+    ],
+    "development": {
+      "finished": [
+        "岗前培训",
+        "准入培训",
+        "岗位培训"
+      ],
+      "pending": [
+        "业务提升模块",
+        "2025 年度复训"
+      ]
+    },
+    "certificates": [
+      {
+        "name": "危险品证书(D类)",
+        "certNo": "HBA-N-1182",
+        "issueDate": "2019-09-04",
+        "expireDate": "2025-09-03"
+      },
+      {
+        "name": "值机员岗位合格证书",
+        "certNo": "2019-198",
+        "issueDate": "2023-07-01",
+        "expireDate": "2026-07-01"
+      }
+    ]
+  },
+  {
+    "id": "emp-22",
+    "name": "李上",
+    "position": "国际值机员",
+    "rank": "在岗",
+    "hireDate": "2023-09-01",
+    "pathTag": "李上 当前在岗，2025 年国际值机员通用培训档案已纳入统计，可结合右侧“培训路径追踪”查看整体场次和频次。",
+    "phone": "18872489319",
+    "team": "B组",
+    "badge": "BKC1524",
+    "languageLevel": "CET4",
+    "remark": "旅游、健身、看书",
+    "skills": {
+      "值机操作": 4,
+      "行李托运": 3,
+      "特殊旅客服务": 3,
+      "中转衔接": 3,
+      "英语沟通": 3,
+      "不正常航班处置": 3
+    },
+    "trainings": [
+      {
+        "date": "2023-09-01",
+        "course": "2025 年个人培训档案已汇总（详见部门级看板）",
+        "score": 0,
+        "result": "—"
+      }
+    ],
+    "development": {
+      "finished": [
+        "岗前培训",
+        "准入培训",
+        "岗位培训"
+      ],
+      "pending": [
+        "业务提升模块",
+        "2025 年度复训"
+      ]
+    },
+    "certificates": [
+      {
+        "name": "危险品证书(D类)",
+        "certNo": "HBA-N-2261",
+        "issueDate": "2023-09-22",
+        "expireDate": "2029-09-21"
+      },
+      {
+        "name": "值机员岗位合格证书",
+        "certNo": "2023-188",
+        "issueDate": "2023-11-01",
+        "expireDate": "2026-11-01"
+      }
+    ]
+  },
+  {
+    "id": "emp-23",
+    "name": "张奇",
+    "position": "国际值机员",
+    "rank": "在岗",
+    "hireDate": "2023-09-01",
+    "pathTag": "张奇 当前在岗，2025 年国际值机员通用培训档案已纳入统计，可结合右侧“培训路径追踪”查看整体场次和频次。",
+    "phone": "19972568542",
+    "team": "B组",
+    "badge": "BKC1528",
+    "languageLevel": "CET4",
+    "remark": "旅游、健身、看书",
+    "skills": {
+      "值机操作": 4,
+      "行李托运": 3,
+      "特殊旅客服务": 3,
+      "中转衔接": 3,
+      "英语沟通": 3,
+      "不正常航班处置": 3
+    },
+    "trainings": [
+      {
+        "date": "2023-09-01",
+        "course": "2025 年个人培训档案已汇总（详见部门级看板）",
+        "score": 0,
+        "result": "—"
+      }
+    ],
+    "development": {
+      "finished": [
+        "岗前培训",
+        "准入培训",
+        "岗位培训"
+      ],
+      "pending": [
+        "业务提升模块",
+        "2025 年度复训"
+      ]
+    },
+    "certificates": [
+      {
+        "name": "危险品证书(D类)",
+        "certNo": "HBA-N-2262",
+        "issueDate": "2023-09-22",
+        "expireDate": "2029-09-21"
+      },
+      {
+        "name": "值机员岗位合格证书",
+        "certNo": "2023-189",
+        "issueDate": "2023-11-01",
+        "expireDate": "2026-11-01"
+      }
+    ]
+  },
+  {
+    "id": "emp-24",
+    "name": "董玲",
+    "position": "国际值机员",
+    "rank": "在岗",
+    "hireDate": "2023-09-01",
+    "pathTag": "董玲 当前在岗，2025 年国际值机员通用培训档案已纳入统计，可结合右侧“培训路径追踪”查看整体场次和频次。",
+    "phone": "15072489625",
+    "team": "B组",
+    "badge": "BKC1526",
+    "languageLevel": "CET4",
+    "remark": "旅游、健身、看书",
+    "skills": {
+      "值机操作": 4,
+      "行李托运": 3,
+      "特殊旅客服务": 3,
+      "中转衔接": 3,
+      "英语沟通": 3,
+      "不正常航班处置": 3
+    },
+    "trainings": [
+      {
+        "date": "2023-09-01",
+        "course": "2025 年个人培训档案已汇总（详见部门级看板）",
+        "score": 0,
+        "result": "—"
+      }
+    ],
+    "development": {
+      "finished": [
+        "岗前培训",
+        "准入培训",
+        "岗位培训"
+      ],
+      "pending": [
+        "业务提升模块",
+        "2025 年度复训"
+      ]
+    },
+    "certificates": [
+      {
+        "name": "危险品证书(D类)",
+        "certNo": "HBA-N-2263",
+        "issueDate": "2023-09-22",
+        "expireDate": "2029-09-21"
+      },
+      {
+        "name": "值机员岗位合格证书",
+        "certNo": "2023-190",
+        "issueDate": "2023-11-01",
+        "expireDate": "2026-11-01"
+      }
+    ]
+  },
+  {
+    "id": "emp-25",
+    "name": "秦雁",
+    "position": "国际值机员",
+    "rank": "在岗",
+    "hireDate": "2023-09-01",
+    "pathTag": "秦雁 当前在岗，2025 年国际值机员通用培训档案已纳入统计，可结合右侧“培训路径追踪”查看整体场次和频次。",
+    "phone": "17596872063",
+    "team": "B组",
+    "badge": "BKC1525",
+    "languageLevel": "CET4",
+    "remark": "旅游、健身、看书",
+    "skills": {
+      "值机操作": 4,
+      "行李托运": 3,
+      "特殊旅客服务": 3,
+      "中转衔接": 3,
+      "英语沟通": 3,
+      "不正常航班处置": 3
+    },
+    "trainings": [
+      {
+        "date": "2023-09-01",
+        "course": "2025 年个人培训档案已汇总（详见部门级看板）",
+        "score": 0,
+        "result": "—"
+      }
+    ],
+    "development": {
+      "finished": [
+        "岗前培训",
+        "准入培训",
+        "岗位培训"
+      ],
+      "pending": [
+        "业务提升模块",
+        "2025 年度复训"
+      ]
+    },
+    "certificates": [
+      {
+        "name": "危险品证书(D类)",
+        "certNo": "HBA-N-2264",
+        "issueDate": "2023-09-22",
+        "expireDate": "2029-09-21"
+      },
+      {
+        "name": "值机员岗位合格证书",
+        "certNo": "2023-191",
+        "issueDate": "2023-11-01",
+        "expireDate": "2026-11-01"
+      }
+    ]
+  },
+  {
+    "id": "emp-26",
+    "name": "肖萍",
+    "position": "国际值机员",
+    "rank": "在岗",
+    "hireDate": "2012-08-01",
+    "pathTag": "肖萍 当前在岗，2025 年国际值机员通用培训档案已纳入统计，可结合右侧“培训路径追踪”查看整体场次和频次。",
+    "phone": "15972134748",
+    "team": "B组",
+    "badge": "BKC0263",
+    "languageLevel": "CET3",
+    "remark": "无",
+    "skills": {
+      "值机操作": 4,
+      "行李托运": 3,
+      "特殊旅客服务": 3,
+      "中转衔接": 3,
+      "英语沟通": 3,
+      "不正常航班处置": 3
+    },
+    "trainings": [
+      {
+        "date": "2012-08-01",
+        "course": "2025 年个人培训档案已汇总（详见部门级看板）",
+        "score": 0,
+        "result": "—"
+      }
+    ],
+    "development": {
+      "finished": [
+        "岗前培训",
+        "准入培训",
+        "岗位培训"
+      ],
+      "pending": [
+        "业务提升模块",
+        "2025 年度复训"
+      ]
+    },
+    "certificates": [
+      {
+        "name": "危险品证书(D类)",
+        "certNo": "HBA-N-0685",
+        "issueDate": "2019-09-04",
+        "expireDate": "2025-09-03"
+      },
+      {
+        "name": "值机员岗位合格证书",
+        "certNo": "2012-059",
+        "issueDate": "2024-11-01",
+        "expireDate": "2026-11-01"
+      }
+    ]
+  },
+  {
+    "id": "emp-27",
+    "name": "叶琳",
+    "position": "国际值机员",
+    "rank": "在岗",
+    "hireDate": "2013-10-01",
+    "pathTag": "叶琳 当前在岗，2025 年国际值机员通用培训档案已纳入统计，可结合右侧“培训路径追踪”查看整体场次和频次。",
+    "phone": "15972150708",
+    "team": "B组",
+    "badge": "BKC0202",
+    "languageLevel": "CET4",
+    "remark": "无",
+    "skills": {
+      "值机操作": 4,
+      "行李托运": 3,
+      "特殊旅客服务": 3,
+      "中转衔接": 3,
+      "英语沟通": 3,
+      "不正常航班处置": 3
+    },
+    "trainings": [
+      {
+        "date": "2013-10-01",
+        "course": "2025 年个人培训档案已汇总（详见部门级看板）",
+        "score": 0,
+        "result": "—"
+      }
+    ],
+    "development": {
+      "finished": [
+        "岗前培训",
+        "准入培训",
+        "岗位培训"
+      ],
+      "pending": [
+        "业务提升模块",
+        "2025 年度复训"
+      ]
+    },
+    "certificates": [
+      {
+        "name": "危险品证书(D类)",
+        "certNo": "HBA-N-0367",
+        "issueDate": "2014-09-11",
+        "expireDate": "2026-09-10"
+      },
+      {
+        "name": "值机员岗位合格证书",
+        "certNo": "2013-069",
+        "issueDate": "2024-11-01",
+        "expireDate": "2026-11-01"
+      }
+    ]
+  },
+  {
+    "id": "emp-28",
+    "name": "刘燕琼",
+    "position": "国际值机员",
+    "rank": "在岗",
+    "hireDate": "2013-10-01",
+    "pathTag": "刘燕琼 当前在岗，2025 年国际值机员通用培训档案已纳入统计，可结合右侧“培训路径追踪”查看整体场次和频次。",
+    "phone": "13618622460",
+    "team": "B组",
+    "badge": "BKC0236",
+    "languageLevel": "CET4",
+    "remark": "无",
+    "skills": {
+      "值机操作": 4,
+      "行李托运": 3,
+      "特殊旅客服务": 3,
+      "中转衔接": 3,
+      "英语沟通": 3,
+      "不正常航班处置": 3
+    },
+    "trainings": [
+      {
+        "date": "2013-10-01",
+        "course": "2025 年个人培训档案已汇总（详见部门级看板）",
+        "score": 0,
+        "result": "—"
+      }
+    ],
+    "development": {
+      "finished": [
+        "岗前培训",
+        "准入培训",
+        "岗位培训"
+      ],
+      "pending": [
+        "业务提升模块",
+        "2025 年度复训"
+      ]
+    },
+    "certificates": [
+      {
+        "name": "危险品证书(D类)",
+        "certNo": "HBA-N-0368",
+        "issueDate": "2014-09-11",
+        "expireDate": "2026-09-10"
+      },
+      {
+        "name": "值机员岗位合格证书",
+        "certNo": "2013-095",
+        "issueDate": "2024-11-01",
+        "expireDate": "2026-11-01"
+      }
+    ]
+  },
+  {
+    "id": "emp-29",
+    "name": "严晓珂",
+    "position": "国际值机员",
+    "rank": "在岗",
+    "hireDate": "2017-10-01",
+    "pathTag": "严晓珂 当前在岗，2025 年国际值机员通用培训档案已纳入统计，可结合右侧“培训路径追踪”查看整体场次和频次。",
+    "phone": "18571318571",
+    "team": "B组",
+    "badge": "BKC0308",
+    "languageLevel": "CET4",
+    "remark": "无",
+    "skills": {
+      "值机操作": 4,
+      "行李托运": 3,
+      "特殊旅客服务": 3,
+      "中转衔接": 3,
+      "英语沟通": 3,
+      "不正常航班处置": 3
+    },
+    "trainings": [
+      {
+        "date": "2017-10-01",
+        "course": "2025 年个人培训档案已汇总（详见部门级看板）",
+        "score": 0,
+        "result": "—"
+      }
+    ],
+    "development": {
+      "finished": [
+        "岗前培训",
+        "准入培训",
+        "岗位培训"
+      ],
+      "pending": [
+        "业务提升模块",
+        "2025 年度复训"
+      ]
+    },
+    "certificates": [
+      {
+        "name": "危险品证书(D类)",
+        "certNo": "HBA-N-0947",
+        "issueDate": "2018-09-07",
+        "expireDate": "2026-09-06"
+      },
+      {
+        "name": "值机员岗位合格证书",
+        "certNo": "2017-131",
+        "issueDate": "2024-11-01",
+        "expireDate": "2026-11-01"
+      }
+    ]
+  },
+  {
+    "id": "emp-30",
+    "name": "肖潇",
+    "position": "国际值机员",
+    "rank": "在岗",
+    "hireDate": "2017-10-01",
+    "pathTag": "肖潇 当前在岗，2025 年国际值机员通用培训档案已纳入统计，可结合右侧“培训路径追踪”查看整体场次和频次。",
+    "phone": "13871135910",
+    "team": "B组",
+    "badge": "BKC0310",
+    "languageLevel": "CET4",
+    "remark": "旅游、健身、看书",
+    "skills": {
+      "值机操作": 4,
+      "行李托运": 3,
+      "特殊旅客服务": 3,
+      "中转衔接": 3,
+      "英语沟通": 3,
+      "不正常航班处置": 3
+    },
+    "trainings": [
+      {
+        "date": "2017-10-01",
+        "course": "2025 年个人培训档案已汇总（详见部门级看板）",
+        "score": 0,
+        "result": "—"
+      }
+    ],
+    "development": {
+      "finished": [
+        "岗前培训",
+        "准入培训",
+        "岗位培训"
+      ],
+      "pending": [
+        "业务提升模块",
+        "2025 年度复训"
+      ]
+    },
+    "certificates": [
+      {
+        "name": "危险品证书(D类)",
+        "certNo": "HBA-N-0948",
+        "issueDate": "2018-09-07",
+        "expireDate": "2026-09-06"
+      },
+      {
+        "name": "值机员岗位合格证书",
+        "certNo": "2017-125",
+        "issueDate": "2024-11-01",
+        "expireDate": "2026-11-01"
+      }
+    ]
+  },
+  {
+    "id": "emp-31",
+    "name": "杨洁涵",
+    "position": "国际值机员",
+    "rank": "在岗",
+    "hireDate": "2017-10-01",
+    "pathTag": "杨洁涵 当前在岗，2025 年国际值机员通用培训档案已纳入统计，可结合右侧“培训路径追踪”查看整体场次和频次。",
+    "phone": "18062587963",
+    "team": "B组",
+    "badge": "BKC0311",
+    "languageLevel": "CET4",
+    "remark": "旅游、健身、看书",
+    "skills": {
+      "值机操作": 4,
+      "行李托运": 3,
+      "特殊旅客服务": 3,
+      "中转衔接": 3,
+      "英语沟通": 3,
+      "不正常航班处置": 3
+    },
+    "trainings": [
+      {
+        "date": "2017-10-01",
+        "course": "2025 年个人培训档案已汇总（详见部门级看板）",
+        "score": 0,
+        "result": "—"
+      }
+    ],
+    "development": {
+      "finished": [
+        "岗前培训",
+        "准入培训",
+        "岗位培训"
+      ],
+      "pending": [
+        "业务提升模块",
+        "2025 年度复训"
+      ]
+    },
+    "certificates": [
+      {
+        "name": "危险品证书(D类)",
+        "certNo": "HBA-N-0949",
+        "issueDate": "2018-09-07",
+        "expireDate": "2026-09-06"
+      },
+      {
+        "name": "值机员岗位合格证书",
+        "certNo": "2017-122",
+        "issueDate": "2024-11-01",
+        "expireDate": "2026-11-01"
+      }
+    ]
+  },
+  {
+    "id": "emp-32",
+    "name": "黄海盈",
+    "position": "国际值机员",
+    "rank": "在岗",
+    "hireDate": "2017-10-01",
+    "pathTag": "黄海盈 当前在岗，2025 年国际值机员通用培训档案已纳入统计，可结合右侧“培训路径追踪”查看整体场次和频次。",
+    "phone": "15054003033",
+    "team": "B组",
+    "badge": "BKC0309",
+    "languageLevel": "CET4",
+    "remark": "旅游、健身、看书",
+    "skills": {
+      "值机操作": 4,
+      "行李托运": 3,
+      "特殊旅客服务": 3,
+      "中转衔接": 3,
+      "英语沟通": 3,
+      "不正常航班处置": 3
+    },
+    "trainings": [
+      {
+        "date": "2017-10-01",
+        "course": "2025 年个人培训档案已汇总（详见部门级看板）",
+        "score": 0,
+        "result": "—"
+      }
+    ],
+    "development": {
+      "finished": [
+        "岗前培训",
+        "准入培训",
+        "岗位培训"
+      ],
+      "pending": [
+        "业务提升模块",
+        "2025 年度复训"
+      ]
+    },
+    "certificates": [
+      {
+        "name": "危险品证书(D类)",
+        "certNo": "HBA-N-0950",
+        "issueDate": "2018-09-07",
+        "expireDate": "2026-09-06"
+      },
+      {
+        "name": "值机员岗位合格证书",
+        "certNo": "2017-126",
+        "issueDate": "2024-11-01",
+        "expireDate": "2026-11-01"
+      }
+    ]
+  },
+  {
+    "id": "emp-33",
+    "name": "刘翔",
+    "position": "国际值机员",
+    "rank": "在岗",
+    "hireDate": "2023-03-01",
+    "pathTag": "刘翔 当前在岗，2025 年国际值机员通用培训档案已纳入统计，可结合右侧“培训路径追踪”查看整体场次和频次。",
+    "phone": "18872329845",
+    "team": "B组",
+    "badge": "BKC1518",
+    "languageLevel": "CET4",
+    "remark": "旅游、健身、看书",
+    "skills": {
+      "值机操作": 4,
+      "行李托运": 3,
+      "特殊旅客服务": 3,
+      "中转衔接": 3,
+      "英语沟通": 3,
+      "不正常航班处置": 3
+    },
+    "trainings": [
+      {
+        "date": "2023-03-01",
+        "course": "2025 年个人培训档案已汇总（详见部门级看板）",
+        "score": 0,
+        "result": "—"
+      }
+    ],
+    "development": {
+      "finished": [
+        "岗前培训",
+        "准入培训",
+        "岗位培训"
+      ],
+      "pending": [
+        "业务提升模块",
+        "2025 年度复训"
+      ]
+    },
+    "certificates": [
+      {
+        "name": "危险品证书(D类)",
+        "certNo": "HBA-N-2200",
+        "issueDate": "2023-03-24",
+        "expireDate": "2029-03-23"
+      },
+      {
+        "name": "值机员岗位合格证书",
+        "certNo": "2023-063",
+        "issueDate": "2023-05-01",
+        "expireDate": "2025-05-01"
+      }
+    ]
+  },
+  {
+    "id": "emp-34",
+    "name": "曾子卓",
+    "position": "国际值机员",
+    "rank": "在岗",
+    "hireDate": "2023-03-01",
+    "pathTag": "曾子卓 当前在岗，2025 年国际值机员通用培训档案已纳入统计，可结合右侧“培训路径追踪”查看整体场次和频次。",
+    "phone": "17750937210",
+    "team": "B组",
+    "badge": "BKC1520",
+    "languageLevel": "CET4",
+    "remark": "旅游、健身、看书",
+    "skills": {
+      "值机操作": 4,
+      "行李托运": 3,
+      "特殊旅客服务": 3,
+      "中转衔接": 3,
+      "英语沟通": 3,
+      "不正常航班处置": 3
+    },
+    "trainings": [
+      {
+        "date": "2023-03-01",
+        "course": "2025 年个人培训档案已汇总（详见部门级看板）",
+        "score": 0,
+        "result": "—"
+      }
+    ],
+    "development": {
+      "finished": [
+        "岗前培训",
+        "准入培训",
+        "岗位培训"
+      ],
+      "pending": [
+        "业务提升模块",
+        "2025 年度复训"
+      ]
+    },
+    "certificates": [
+      {
+        "name": "危险品证书(D类)",
+        "certNo": "HBA-N-2201",
+        "issueDate": "2023-03-24",
+        "expireDate": "2029-03-23"
+      },
+      {
+        "name": "值机员岗位合格证书",
+        "certNo": "2023-064",
+        "issueDate": "2023-05-01",
+        "expireDate": "2025-05-01"
+      }
+    ]
+  },
+  {
+    "id": "emp-35",
+    "name": "郭萌",
+    "position": "国际值机员",
+    "rank": "在岗",
+    "hireDate": "2023-03-01",
+    "pathTag": "郭萌 当前在岗，2025 年国际值机员通用培训档案已纳入统计，可结合右侧“培训路径追踪”查看整体场次和频次。",
+    "phone": "13627288139",
+    "team": "B组",
+    "badge": "BKC1521",
+    "languageLevel": "CET4",
+    "remark": "旅游、健身、看书",
+    "skills": {
+      "值机操作": 4,
+      "行李托运": 3,
+      "特殊旅客服务": 3,
+      "中转衔接": 3,
+      "英语沟通": 3,
+      "不正常航班处置": 3
+    },
+    "trainings": [
+      {
+        "date": "2023-03-01",
+        "course": "2025 年个人培训档案已汇总（详见部门级看板）",
+        "score": 0,
+        "result": "—"
+      }
+    ],
+    "development": {
+      "finished": [
+        "岗前培训",
+        "准入培训",
+        "岗位培训"
+      ],
+      "pending": [
+        "业务提升模块",
+        "2025 年度复训"
+      ]
+    },
+    "certificates": [
+      {
+        "name": "危险品证书(D类)",
+        "certNo": "HBA-N-2202",
+        "issueDate": "2023-03-24",
+        "expireDate": "2029-03-23"
+      },
+      {
+        "name": "值机员岗位合格证书",
+        "certNo": "2023-065",
+        "issueDate": "2023-05-01",
+        "expireDate": "2025-05-01"
+      }
+    ]
+  },
+  {
+    "id": "emp-36",
+    "name": "华嘉慧",
+    "position": "国际值机员",
+    "rank": "调岗",
+    "hireDate": "2010-08-01",
+    "pathTag": "华嘉慧 为调岗员工，建议结合原岗位培训记录和现岗位差异化培训，做好过渡期双岗对标。",
+    "phone": "15827211227",
+    "team": "B组",
+    "badge": "BKC0165",
+    "languageLevel": "CET4",
+    "remark": "旅游、健身、看书",
+    "skills": {
+      "值机操作": 3,
+      "行李托运": 2,
+      "特殊旅客服务": 2,
+      "中转衔接": 2,
+      "英语沟通": 2,
+      "不正常航班处置": 2
+    },
+    "trainings": [
+      {
+        "date": "2010-08-01",
+        "course": "2025 年个人培训档案已汇总（详见部门级看板）",
+        "score": 0,
+        "result": "—"
+      }
+    ],
+    "development": {
+      "finished": [
+        "岗前培训",
+        "准入培训",
+        "岗位培训"
+      ],
+      "pending": [
+        "业务提升模块",
+        "2025 年度复训"
+      ]
+    },
+    "certificates": [
+      {
+        "name": "危险品证书(D类)",
+        "certNo": "HBA-N-0228",
+        "issueDate": "2011-09-06",
+        "expireDate": "2025-09-05"
+      },
+      {
+        "name": "值机员岗位合格证书",
+        "certNo": "2010-140",
+        "issueDate": "2023-05-01",
+        "expireDate": "2026-05-01"
+      }
+    ]
+  },
+  {
+    "id": "emp-37",
+    "name": "叶和煌",
+    "position": "国际值机员",
+    "rank": "调岗",
+    "hireDate": "2010-08-01",
+    "pathTag": "叶和煌 为调岗员工，建议结合原岗位培训记录和现岗位差异化培训，做好过渡期双岗对标。",
+    "phone": "13986144163",
+    "team": "B组",
+    "badge": "BKC0179",
+    "languageLevel": "CET4",
+    "remark": "旅游、健身、看书",
+    "skills": {
+      "值机操作": 3,
+      "行李托运": 2,
+      "特殊旅客服务": 2,
+      "中转衔接": 2,
+      "英语沟通": 2,
+      "不正常航班处置": 2
+    },
+    "trainings": [
+      {
+        "date": "2010-08-01",
+        "course": "2025 年个人培训档案已汇总（详见部门级看板）",
+        "score": 0,
+        "result": "—"
+      }
+    ],
+    "development": {
+      "finished": [
+        "岗前培训",
+        "准入培训",
+        "岗位培训"
+      ],
+      "pending": [
+        "业务提升模块",
+        "2025 年度复训"
+      ]
+    },
+    "certificates": [
+      {
+        "name": "危险品证书(D类)",
+        "certNo": "HBA-N-0229",
+        "issueDate": "2011-09-06",
+        "expireDate": "2025-09-05"
+      },
+      {
+        "name": "值机员岗位合格证书",
+        "certNo": "2010-148",
+        "issueDate": "2023-05-01",
+        "expireDate": "2026-05-01"
+      }
+    ]
+  },
+  {
+    "id": "emp-38",
+    "name": "罗敏",
+    "position": "国际值机员",
+    "rank": "返岗",
+    "hireDate": "2008-10-01",
+    "pathTag": "罗敏 为返岗员工，建议重点核查复训完成情况与证书有效期，避免证件与能力脱节。",
+    "phone": "15971470516",
+    "team": "B组",
+    "badge": "BKC0106",
+    "languageLevel": "CET4",
+    "remark": "旅游、健身、看书",
+    "skills": {
+      "值机操作": 3,
+      "行李托运": 3,
+      "特殊旅客服务": 3,
+      "中转衔接": 2,
+      "英语沟通": 2,
+      "不正常航班处置": 2
+    },
+    "trainings": [
+      {
+        "date": "2008-10-01",
+        "course": "2025 年个人培训档案已汇总（详见部门级看板）",
+        "score": 0,
+        "result": "—"
+      }
+    ],
+    "development": {
+      "finished": [
+        "岗前培训",
+        "准入培训",
+        "岗位培训"
+      ],
+      "pending": [
+        "业务提升模块",
+        "2025 年度复训"
+      ]
+    },
+    "certificates": [
+      {
+        "name": "危险品证书(D类)",
+        "certNo": "HBA-N-0195",
+        "issueDate": "2009-09-03",
+        "expireDate": "2025-09-02"
+      },
+      {
+        "name": "值机员岗位合格证书",
+        "certNo": "2009-130",
+        "issueDate": "2023-05-01",
+        "expireDate": "2026-05-01"
+      }
+    ]
+  },
+  {
+    "id": "emp-39",
+    "name": "任霞",
+    "position": "国际值机员",
+    "rank": "返岗",
+    "hireDate": "2008-10-01",
+    "pathTag": "任霞 为返岗员工，建议重点核查复训完成情况与证书有效期，避免证件与能力脱节。",
+    "phone": "13971211055",
+    "team": "B组",
+    "badge": "BKC0091",
+    "languageLevel": "CET4",
+    "remark": "旅游、健身、看书",
+    "skills": {
+      "值机操作": 3,
+      "行李托运": 3,
+      "特殊旅客服务": 3,
+      "中转衔接": 2,
+      "英语沟通": 2,
+      "不正常航班处置": 2
+    },
+    "trainings": [
+      {
+        "date": "2008-10-01",
+        "course": "2025 年个人培训档案已汇总（详见部门级看板）",
+        "score": 0,
+        "result": "—"
+      }
+    ],
+    "development": {
+      "finished": [
+        "岗前培训",
+        "准入培训",
+        "岗位培训"
+      ],
+      "pending": [
+        "业务提升模块",
+        "2025 年度复训"
+      ]
+    },
+    "certificates": [
+      {
+        "name": "危险品证书(D类)",
+        "certNo": "HBA-N-0196",
+        "issueDate": "2009-09-03",
+        "expireDate": "2025-09-02"
+      },
+      {
+        "name": "值机员岗位合格证书",
+        "certNo": "2009-112",
+        "issueDate": "2023-05-01",
+        "expireDate": "2026-05-01"
+      }
+    ]
+  },
+  {
+    "id": "emp-40",
+    "name": "陈睿康",
+    "position": "国际值机员",
+    "rank": "返岗",
+    "hireDate": "2023-03-01",
+    "pathTag": "陈睿康 为返岗员工，建议重点核查复训完成情况与证书有效期，避免证件与能力脱节。",
+    "phone": "17871932869",
+    "team": "B组",
+    "badge": "BKC1522",
+    "languageLevel": "CET4",
+    "remark": "旅游、健身、看书",
+    "skills": {
+      "值机操作": 3,
+      "行李托运": 3,
+      "特殊旅客服务": 3,
+      "中转衔接": 2,
+      "英语沟通": 2,
+      "不正常航班处置": 2
+    },
+    "trainings": [
+      {
+        "date": "2023-03-01",
+        "course": "2025 年个人培训档案已汇总（详见部门级看板）",
+        "score": 0,
+        "result": "—"
+      }
+    ],
+    "development": {
+      "finished": [
+        "岗前培训",
+        "准入培训",
+        "岗位培训"
+      ],
+      "pending": [
+        "业务提升模块",
+        "2025 年度复训"
+      ]
+    },
+    "certificates": [
+      {
+        "name": "危险品证书(D类)",
+        "certNo": "HBA-N-2203",
+        "issueDate": "2023-03-24",
+        "expireDate": "2029-03-23"
+      },
+      {
+        "name": "值机员岗位合格证书",
+        "certNo": "2023-066",
+        "issueDate": "2023-05-01",
+        "expireDate": "2025-05-01"
+      }
+    ]
+  }
+];
 
-    // 岗位目标技能
     const skillTargetByPosition = {
-      "国际值机员": [4, 3, 3, 3, 3, 3],
-      "国际旅客服务员": [3, 2, 4, 4, 3, 3],
-      "行李查验员": [2, 3, 2, 2, 2, 3],
-      "行李分拣监管员": [2, 3, 2, 3, 2, 3],
-      "行李分拣员": [2, 3, 1, 3, 1, 2]
+      "国际值机员":       [4, 3, 3, 3, 3, 3],
+      "国际旅客服务员":   [3, 2, 4, 4, 3, 3],
+      "行李查验员":       [2, 3, 2, 2, 2, 3],
+      "行李分拣监管员":   [2, 3, 2, 3, 2, 3],
+      "行李分拣员":       [2, 3, 1, 3, 1, 2]
     };
 
-    // =================== 工具函数 ===================
+    // 工具函数
     function formatDate(dateStr) {
       const d = new Date(dateStr);
       if (Number.isNaN(d.getTime())) return dateStr;
@@ -869,7 +3098,6 @@
       return Math.round(ms / (1000 * 60 * 60 * 24));
     }
 
-    // 状态：ok / near / expired（对用户文本不出现“已过期”字样）
     function getCertStatus(expireDateStr) {
       const now = new Date();
       const exp = new Date(expireDateStr);
@@ -886,7 +3114,7 @@
       return { type: "ok", text: "有效", daysLeft: days };
     }
 
-    // =================== Header 时钟 ===================
+    // Header 时钟
     function startClock() {
       const el = document.getElementById("headerClock");
       function update() {
@@ -900,7 +3128,7 @@
       setInterval(update, 1000);
     }
 
-    // =================== 左列：个人视角 ===================
+    // 左列：个人视角
     let radarChart;
 
     function initEmployeeSelect() {
@@ -927,14 +3155,14 @@
       const emp = employees.find(e => e.id === empId);
       if (!emp) return;
 
-      // 基本信息
+      // ===== 顶部：基本信息小卡片 =====
       const basicEl = document.getElementById("personBasicCard");
       basicEl.innerHTML = `
         <div class="person-basic-title">基本信息</div>
         <div class="person-basic-grid">
           <div><span class="person-basic-label">姓名：</span>${emp.name}</div>
-          <div><span class="person-basic-label">岗位：</span>${emp.position}</div>
-          <div><span class="person-basic-label">职级：</span>${emp.rank}</div>
+          <div><span class="person-basic-label">岗位：</span>${emp.position || "—"}</div>
+          <div><span class="person-basic-label">人员状态：</span>${emp.rank || "—"}</div>
           <div><span class="person-basic-label">入职时间：</span>${formatDate(emp.hireDate)}</div>
         </div>
       `;
@@ -942,12 +3170,12 @@
       const taglineEl = document.getElementById("personTagline");
       taglineEl.textContent = emp.pathTag || "该员工暂无补充说明。";
 
-      // 雷达图：当前 vs 岗位目标
+      // ===== 能力雷达图（保持不变）=====
       const radarEl = document.getElementById("skillRadarChart");
       if (!radarChart) {
         radarChart = echarts.init(radarEl);
       }
-      const currentValues = skills.map(s => emp.skills[s] || 1);
+      const currentValues = skills.map(s => emp.skills?.[s] || 1);
       const targetValues = skillTargetByPosition[emp.position] || skills.map(() => 3);
 
       radarChart.setOption({
@@ -977,60 +3205,205 @@
             name: "能力对标",
             type: "radar",
             data: [
-              {
-                value: currentValues,
-                name: "当前水平",
-                areaStyle: { opacity: 0.35 }
-              },
-              {
-                value: targetValues,
-                name: "岗位目标",
-                areaStyle: { opacity: 0.18 }
-              }
+              { value: currentValues, name: "当前水平", areaStyle: { opacity: 0.35 } },
+              { value: targetValues,  name: "岗位目标", areaStyle: { opacity: 0.18 } }
             ]
           }
         ]
       });
 
-      // 培训历程
-      const timelineEl = document.getElementById("trainingTimeline");
-      timelineEl.innerHTML = "";
-      emp.trainings
-        .slice()
-        .sort((a, b) => new Date(a.date) - new Date(b.date))
-        .forEach(tr => {
-          const item = document.createElement("div");
-          item.className = "timeline-item";
-          item.innerHTML = `
-            <div class="timeline-dot"></div>
-            <div class="timeline-content">
-              <div class="timeline-title-row">
-                <div class="timeline-title">${tr.course}</div>
-                <div class="timeline-meta">${formatDate(tr.date)}</div>
-              </div>
-              <div class="timeline-meta">成绩：${tr.score} 分 · 结果：${tr.result}</div>
-            </div>
-          `;
-          timelineEl.appendChild(item);
+      // ===== 公共：培训 / 证书 / 发展路径等 =====
+      const trainings = emp.trainings || [];
+      const trainingCount = trainings.length;
+
+      let firstTraining = null;
+      let lastTraining = null;
+      if (trainingCount) {
+        const sorted = trainings
+          .slice()
+          .sort((a, b) => new Date(a.date) - new Date(b.date));
+        firstTraining = sorted[0];
+        lastTraining = sorted[sorted.length - 1];
+      }
+
+      const certs = emp.certificates || [];
+      const totalCerts = certs.length;
+
+      let riskCerts = [];
+      let earliestCert = null;
+      certs.forEach(cert => {
+        const st = getCertStatus(cert.expireDate);
+        if (st.type === "near" || st.type === "expired") {
+          riskCerts.push({ cert, st });
+        }
+        if (!earliestCert || new Date(cert.expireDate) < new Date(earliestCert.cert.expireDate)) {
+          earliestCert = { cert, st };
+        }
+      });
+
+      const now = new Date();
+      const hire = new Date(emp.hireDate);
+      let yearsOfService = null;
+      if (!Number.isNaN(hire.getTime())) {
+        yearsOfService = (diffDays(hire, now) / 365).toFixed(1);
+      }
+
+      const dev = emp.development || { finished: [], pending: [] };
+      const finishedList = dev.finished || [];
+      const pendingList = dev.pending || [];
+
+      const finishedText = finishedList.length ? finishedList.join("、") : "—";
+      const pendingText = pendingList.length ? pendingList.join("、") : "—";
+
+      // 新增：从员工对象里取 联系电话 / 班组 / 工作牌 / 外语水平 / 备注（没有就显示 —）
+      const phone = emp.phone || "—";
+      const team = emp.team || "—";
+      const badge = emp.badge || emp.workCard || "—";
+      const languageLevel = emp.languageLevel || emp.foreignLanguage || "—";
+      const remark = emp.remark || emp.note || "—";
+
+      // 证书明细里增加 发证日期 + 证书编号
+      const certDetails = totalCerts
+        ? certs
+            .map(c => {
+              const issue = c.issueDate ? formatDate(c.issueDate) : "—";
+              const expire = c.expireDate ? formatDate(c.expireDate) : "—";
+              const no = c.certNo || c.certificateNo || "—";
+              return `${c.name}（证书编号：${no}，发证：${issue}，到期：${expire}）`;
+            })
+            .join("<br/>")
+        : "暂未录入证书信息";
+
+      const riskDetails = riskCerts.length
+        ? riskCerts
+            .map(rc => {
+              const c = rc.cert;
+              const issue = c.issueDate ? formatDate(c.issueDate) : "—";
+              const expire = c.expireDate ? formatDate(c.expireDate) : "—";
+              const no = c.certNo || c.certificateNo || "—";
+              return `${c.name}（证书编号：${no}，发证：${issue}，到期：${expire}）`;
+            })
+            .join("<br/>")
+        : "无即将到期或已超期证书";
+
+      // ===== 中间模块左侧表格：把个人信息都列出来（删掉培训记录概况/明细）=====
+      const infoTable = document.getElementById("personInfoTable");
+      if (infoTable) {
+        infoTable.innerHTML = `
+          <thead>
+            <tr>
+              <th style="width:95px;">项目</th>
+              <th>内容</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>姓名</td>
+              <td>${emp.name}</td>
+            </tr>
+            <tr>
+              <td>岗位</td>
+              <td>${emp.position || "—"}</td>
+            </tr>
+            <tr>
+              <td>人员状态</td>
+              <td>${emp.rank || "—"}</td>
+            </tr>
+            <tr>
+              <td>入职时间</td>
+              <td>${formatDate(emp.hireDate)}</td>
+            </tr>
+            <tr>
+              <td>工龄</td>
+              <td>${yearsOfService ? yearsOfService + " 年" : "—"}</td>
+            </tr>
+            <tr>
+              <td>联系电话</td>
+              <td>${phone}</td>
+            </tr>
+            <tr>
+              <td>班组</td>
+              <td>${team}</td>
+            </tr>
+            <tr>
+              <td>工作牌号</td>
+              <td>${badge}</td>
+            </tr>
+            <tr>
+              <td>外语水平</td>
+              <td>${languageLevel}</td>
+            </tr>
+            <tr>
+              <td>备注</td>
+              <td>${remark}</td>
+            </tr>
+            <tr>
+              <td>发展路径 · 已完成</td>
+              <td>${finishedText}</td>
+            </tr>
+            <tr>
+              <td>发展路径 · 待完成</td>
+              <td>${pendingText}</td>
+            </tr>
+            <tr>
+              <td>证书数量</td>
+              <td>共 ${totalCerts} 项证书，其中存在风险证书 ${riskCerts.length} 项</td>
+            </tr>
+            <tr>
+              <td>证书明细</td>
+              <td>${certDetails}</td>
+            </tr>
+            <tr>
+              <td>风险证书明细</td>
+              <td>${riskDetails}</td>
+            </tr>
+            ${
+              earliestCert
+                ? `<tr>
+                     <td>最早到期证书</td>
+                     <td>${earliestCert.cert.name} · 到期日 ${formatDate(
+                    earliestCert.cert.expireDate
+                  )}</td>
+                   </tr>`
+                : ""
+            }
+          </tbody>
+        `;
+      }
+
+      // ===== 右侧文字分析：保持 =====
+      const devSummaryEl = document.getElementById("personDevSummary");
+      if (devSummaryEl) {
+        const certsRisk = certs.filter(c => {
+          const st = getCertStatus(c.expireDate);
+          return st.type === "near" || st.type === "expired";
         });
 
-      // 发展路径
-      const devEl = document.getElementById("devPath");
-      devEl.innerHTML = "";
-      (emp.development.finished || []).forEach(step => {
-        const span = document.createElement("span");
-        span.className = "dev-chip";
-        span.textContent = step;
-        devEl.appendChild(span);
-      });
-      (emp.development.pending || []).forEach(step => {
-        const span = document.createElement("span");
-        span.className = "dev-chip pending";
-        span.textContent = step;
-        devEl.appendChild(span);
-      });
+        let riskSentence = "";
+        if (!certs.length) {
+          riskSentence =
+            "当前系统中尚未录入该员工证书详细信息，建议补齐证照台账，保证“人-岗-证”一致。";
+        } else if (!certsRisk.length) {
+          riskSentence =
+            "当前所有证书均在有效期内，短期内不存在证件风险，可结合年度复训计划统筹安排集中续证。";
+        } else {
+          const names = certsRisk.map(c => c.name).join("、");
+          riskSentence =
+            `存在证书风险：${names} 等证书即将到期或已超期，建议优先安排续证或复训，避免现场排班受限。`;
+        }
 
-      // 个人证书到期提醒（仅未来 30 天）
+        devSummaryEl.innerHTML = `
+          <p style="margin:0 0 4px;color:var(--text-main);"><strong>发展分析</strong></p>
+          <p style="margin:0 0 4px;">${emp.pathTag || "该员工的核心角色与使用建议可在后续补充。"}</p>
+          <p style="margin:0 0 4px;">
+            发展路径：已完成环节 <strong>${finishedList.length}</strong> 项（${finishedText}），
+            待完成环节 <strong>${pendingList.length}</strong> 项（${pendingText}）。
+          </p>
+          <p style="margin:0;">${riskSentence}</p>
+        `;
+      }
+
+      // ===== 左下角“个人证书到期提醒”依然调用原函数 =====
       renderCertReminder(emp);
     }
 
@@ -1052,7 +3425,7 @@
 
       const nearCerts = (emp.certificates || []).filter(cert => {
         const st = getCertStatus(cert.expireDate);
-        return st.type === "near"; // 仅未来 30 天内
+        return st.type === "near";
       });
 
       if (nearCerts.length === 0) {
@@ -1082,14 +3455,13 @@
         tbody.appendChild(tr);
       });
 
-      hintEl.textContent =
-        "请提前排布培训与考试计划，优先保障上述证书续证，可在系统中设置自动提醒。";
+      hintEl.textContent = "请提前排布培训与考试计划，优先保障上述证书续证，可在系统中设置自动提醒。";
     }
 
-    // =================== 右列：岗位视角 ===================
+    // 右列：岗位视角
     let skillMatrixChart, trainingPathChart, chainInsightChart;
+    let currentTrainingRole = "intl-checkin";
 
-    // 岗位技能对标（分组柱状图）
     function initSkillMatrixChart() {
       const el = document.getElementById("skillMatrixChart");
       if (!el) return;
@@ -1136,11 +3508,7 @@
           max: 4,
           interval: 1,
           axisLine: { lineStyle: { color: "#274a7a" } },
-          axisLabel: {
-            color: "#A6B5D9",
-            fontSize: 11,
-            formatter: v => `${v}`
-          },
+          axisLabel: { color: "#A6B5D9", fontSize: 11 },
           splitLine: { lineStyle: { color: "rgba(39,74,122,0.4)" } }
         },
         series
@@ -1149,16 +3517,111 @@
       skillMatrixChart.setOption(option);
     }
 
-    // 培训路径进度条
-    function initTrainingPathChart() {
-      const el = document.getElementById("trainingPathChart");
-      if (!el) return;
-      trainingPathChart = echarts.init(el);
+    // 通用培训表（固定，四个岗位共用）
+    function buildCommonTrainingTable() {
+      const table = document.getElementById("commonTrainingTable");
+      if (!table) return;
+      const tbody = table.querySelector("tbody");
+      if (!tbody) return;
 
-      const stages = trainingStageSummary.map(s => s.stage);
-      const rates = trainingStageSummary.map(s =>
-        +((s.finished / s.total) * 100).toFixed(1)
-      );
+      const baseRole = roleTrainingConfig["intl-checkin"];
+      const list = (baseRole && baseRole.commonTrainings) || [];
+      tbody.innerHTML = "";
+
+      let totalSessions = 0;
+      let totalPeopleTimes = 0;
+
+      list.forEach((item, idx) => {
+        const peopleTimes = (item.sessions || 0) * (item.people || 0);
+        totalSessions += item.sessions || 0;
+        totalPeopleTimes += peopleTimes;
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${idx + 1}</td>
+          <td>${item.name}</td>
+          <td>${item.sessions} 次</td>
+          <td>${peopleTimes} 人次</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      const totalTr = document.createElement("tr");
+      totalTr.innerHTML = `
+        <td colspan="2" style="text-align:right;font-weight:600;">总计</td>
+        <td>${totalSessions} 次</td>
+        <td>${totalPeopleTimes} 人次</td>
+      `;
+      tbody.appendChild(totalTr);
+    }
+
+    function updateRoleSummary(roleKey) {
+      const el = document.getElementById("roleSummaryText");
+      if (!el) return;
+      const cfg = roleTrainingConfig[roleKey];
+      if (!cfg) {
+        el.textContent = "当前岗位培训数据待补录。";
+        return;
+      }
+
+      const transfer = cfg.transfer || [];
+      const back = cfg.back || [];
+      const onDuty = cfg.onDuty || [];
+      const autoHeadcount =
+        transfer.length + back.length + onDuty.length || cfg.headcount;
+
+      if (autoHeadcount) {
+        el.innerHTML = `
+          <strong>${cfg.name}</strong> · ${cfg.year || "2025"} 年在册
+          <strong>${autoHeadcount}</strong> 人
+        `;
+      } else {
+        el.innerHTML = `
+          <strong>${cfg.name}</strong> · ${cfg.year || "2025"} 年在册人数待补录
+        `;
+      }
+    }
+
+    function renderDiffTrainingChart(roleKey) {
+      const cfg = roleTrainingConfig[roleKey] || {};
+      const el = document.getElementById("trainingPathChart");
+      const noteEl = document.getElementById("diffTrainingNote");
+      if (!el) return;
+
+      if (!trainingPathChart) {
+        trainingPathChart = echarts.init(el);
+      }
+
+      const list = cfg.diffTrainings || [];
+
+      if (!list.length) {
+        trainingPathChart.clear();
+        trainingPathChart.setOption({
+          title: {
+            text: "该岗位差异化培训数据待补录",
+            left: "center",
+            top: "middle",
+            textStyle: { color: "#A6B5D9", fontSize: 12 }
+          },
+          xAxis: { show: false },
+          yAxis: { show: false },
+          series: []
+        });
+        if (noteEl) {
+          noteEl.textContent = "* 该岗位差异化培训数据暂未录入。";
+        }
+        return;
+      }
+
+      const names = list.map(i => i.name);
+      const sessions = list.map(i => i.sessions);
+      const maxSessions = sessions.length ? Math.max(...sessions) : 0;
+      const yMax = maxSessions > 0 ? maxSessions + 5 : 5;
+
+      const peoplePerSession = list[0].peoplePerSession || 0;
+      const totalSessions = sessions.reduce((sum, v) => sum + v, 0);
+      const totalPeople =
+        peoplePerSession > 0 ? totalSessions * peoplePerSession : null;
 
       const option = {
         tooltip: {
@@ -1169,71 +3632,206 @@
           textStyle: { fontSize: 11 },
           formatter: params => {
             const idx = params[0].dataIndex;
-            const s = trainingStageSummary[idx];
+            const item = list[idx];
+            const pps = item.peoplePerSession || peoplePerSession || 0;
+            const total = pps ? item.sessions * pps : null;
             return `
-              <strong>${s.stage}</strong><br/>
-              完成率：${rates[idx]}%<br/>
-              已完成：${s.finished} 人 / 总计：${s.total} 人
+              <strong>${item.name}</strong><br/>
+              培训场次：${item.sessions} 场<br/>
+              每场：${pps || "—"} 人${total ? `<br/>合计：${total} 人次` : ""}
             `;
           }
         },
-        grid: { left: 90, right: 40, top: 30, bottom: 30 },
-        xAxis: {
-          type: "value",
-          min: 0,
-          max: 100,
-          axisLabel: {
-            color: "#A6B5D9",
-            fontSize: 11,
-            formatter: v => `${v}%`
-          },
-          axisLine: { lineStyle: { color: "#274a7a" } },
-          splitLine: { lineStyle: { color: "rgba(39,74,122,0.4)" } }
+        legend: {
+          data: ["培训场次", "趋势"],
+          textStyle: { color: "#A6B5D9", fontSize: 11 },
+          top: 8
         },
-        yAxis: {
+        grid: { left: 50, right: 20, top: 40, bottom: 40 },
+        xAxis: {
           type: "category",
-          data: stages,
+          data: names,
           axisLine: { lineStyle: { color: "#274a7a" } },
           axisLabel: { color: "#A6B5D9", fontSize: 11 }
         },
+        yAxis: {
+          type: "value",
+          min: 0,
+          max: yMax,
+          axisLine: { lineStyle: { color: "#274a7a" } },
+          axisLabel: {
+            color: "#A6B5D9",
+            fontSize: 11,
+            formatter: v => `${v} 场`
+          },
+          splitLine: { lineStyle: { color: "rgba(39,74,122,0.4)" } }
+        },
         series: [
           {
-            name: "完成率",
+            name: "培训场次",
             type: "bar",
-            data: rates,
-            barWidth: 16,
-            itemStyle: {
-              borderRadius: 8
-            },
-            label: {
-              show: true,
-              position: "right",
-              formatter: params => `${params.value}%`,
-              color: "#e8f4ff",
-              fontSize: 11
-            }
+            barWidth: 18,
+            data: sessions
+          },
+          {
+            name: "趋势",
+            type: "line",
+            smooth: true,
+            data: sessions
           }
         ]
       };
 
-      trainingPathChart.setOption(option);
+      trainingPathChart.setOption(option, true);
 
-      // 日常验证问题列表
-      const listEl = document.getElementById("bottleneckList");
-      listEl.innerHTML = "";
-      inspectItems.forEach(it => {
+      if (noteEl) {
+        if (totalPeople) {
+          noteEl.textContent =
+            `* 纵轴为 2025 年该岗位差异化培训场次，共 ${totalSessions} 场，每场 ${peoplePerSession} 人，合计 ${totalPeople} 人次。`;
+        } else {
+          noteEl.textContent = "* 纵轴为 2025 年该岗位差异化培训场次。";
+        }
+      }
+    }
+
+    // 岗位明细弹窗
+    function openRoleDetailModal() {
+      const modal = document.getElementById("roleDetailModal");
+      const bodyEl = document.getElementById("roleDetailBody");
+      if (!modal || !bodyEl) return;
+
+      const cfg = roleTrainingConfig[currentTrainingRole];
+      if (!cfg) {
+        bodyEl.innerHTML = "<p style='margin:0;'>当前岗位人员明细待补录。</p>";
+      } else {
+        const transfer = cfg.transfer || [];
+        const back = cfg.back || [];
+        const onDuty = cfg.onDuty || [];
+        const headcount =
+          transfer.length + back.length + onDuty.length || cfg.headcount || 0;
+
+        const parts = [];
+        parts.push(`
+          <p style="margin:0 0 4px;">
+            <strong>${cfg.name}</strong> · ${cfg.year || "2025"} 年在册共
+            <strong>${headcount}</strong> 人，其中调岗
+            <strong>${transfer.length}</strong> 人，返岗
+            <strong>${back.length}</strong> 人，在岗
+            <strong>${onDuty.length}</strong> 人。
+          </p>
+        `);
+
+        if (transfer.length) {
+          parts.push(`<div class="modal-section-title">调岗：</div>`);
+          parts.push(`<div class="modal-tag-list">${transfer.join("、")}</div>`);
+        }
+        if (back.length) {
+          parts.push(`<div class="modal-section-title">返岗：</div>`);
+          parts.push(`<div class="modal-tag-list">${back.join("、")}</div>`);
+        }
+        if (onDuty.length) {
+          parts.push(`<div class="modal-section-title">在岗：</div>`);
+          parts.push(`<div class="modal-tag-list">${onDuty.join("、")}</div>`);
+        }
+
+        bodyEl.innerHTML = parts.join("");
+      }
+
+      modal.style.display = "flex";
+    }
+
+    function closeRoleDetailModal() {
+      const modal = document.getElementById("roleDetailModal");
+      if (!modal) return;
+      modal.style.display = "none";
+    }
+
+    // 日常验证问题 · 向上滚动（类似“培训实施实时记录”）
+    function initBottleneckScroll() {
+      const viewport = document.getElementById("bottleneckList");
+      if (!viewport) return;
+      viewport.innerHTML = "";
+
+      const scrollInner = document.createElement("div");
+      scrollInner.className = "bottleneck-scroll";
+
+      function createItemDom(item) {
         const div = document.createElement("div");
         div.className = "bottleneck-item";
-        const statusHtml =
-          it.status === "不知晓"
-            ? `<span class="pill-risk">${it.status}</span>`
-            : it.status;
+        let statusHtml;
+        if (item.status === "不知晓" || item.status === "问题") {
+          statusHtml = `<span class="pill-risk">${item.status}</span>`;
+        } else {
+          statusHtml = item.status;
+        }
         div.innerHTML = `
-          <span class="label">【${it.level}】${it.team} · ${it.content}</span>
+          <span class="label">【${item.level}】${item.team} · ${item.content}</span>
           <span class="rate">${statusHtml}</span>
         `;
-        listEl.appendChild(div);
+        return div;
+      }
+
+      // 原始列表
+      inspectItems.forEach(it => {
+        scrollInner.appendChild(createItemDom(it));
       });
+      // 克隆一遍，保证无缝循环
+      inspectItems.forEach(it => {
+        scrollInner.appendChild(createItemDom(it));
+      });
+
+      viewport.appendChild(scrollInner);
+
+      // 等待一帧再计算高度，保证 offsetHeight 正确
+      window.setTimeout(() => {
+        const firstItem = scrollInner.children[0];
+        if (!firstItem) return;
+        const itemHeight = firstItem.offsetHeight;
+        const visibleCount = Math.min(3, inspectItems.length); // 窗口显示 3 条左右
+        const totalHeight = itemHeight * inspectItems.length;
+
+        viewport.style.height = itemHeight * visibleCount + "px";
+        scrollInner.style.setProperty("--scroll-distance", `-${totalHeight}px`);
+
+        // 每条大概 4 秒滚完一轮，可以按需要调节
+        const duration = Math.max(15, inspectItems.length * 4);
+        scrollInner.style.setProperty("--scroll-duration", `${duration}s`);
+      }, 60);
+    }
+
+    function initTrainingPathChart() {
+      buildCommonTrainingTable();
+
+      currentTrainingRole = "intl-checkin";
+      updateRoleSummary(currentTrainingRole);
+      renderDiffTrainingChart(currentTrainingRole);
+
+      const roleSelect = document.getElementById("roleTrainingSelect");
+      if (roleSelect) {
+        roleSelect.value = currentTrainingRole;
+        roleSelect.addEventListener("change", () => {
+          currentTrainingRole = roleSelect.value;
+          updateRoleSummary(currentTrainingRole);
+          renderDiffTrainingChart(currentTrainingRole);
+        });
+      }
+
+      const detailBtn = document.getElementById("roleDetailBtn");
+      const modal = document.getElementById("roleDetailModal");
+      if (detailBtn && modal) {
+        detailBtn.addEventListener("click", openRoleDetailModal);
+        modal.addEventListener("click", e => {
+          if (
+            e.target.id === "roleDetailModal" ||
+            e.target.classList.contains("modal-close")
+          ) {
+            closeRoleDetailModal();
+          }
+        });
+      }
+
+      // 初始化日常验证问题滚动
+      initBottleneckScroll();
     }
 
     // 人-岗-证-训链路洞察
@@ -1242,25 +3840,23 @@
       if (!el) return;
       chainInsightChart = echarts.init(el);
 
-      // 按岗位聚合
       const posMap = {};
-      employees.forEach(function (emp) {
+      employees.forEach(emp => {
         if (!posMap[emp.position]) posMap[emp.position] = [];
         posMap[emp.position].push(emp);
       });
 
-      const xData = positionsAll; // 固定 5 个岗位
+      const xData = positionsAll;
       const trainingRates = [];
       const riskRates = [];
 
-      xData.forEach(function (pos) {
+      xData.forEach(pos => {
         const empList = posMap[pos] || [];
         const n = empList.length;
 
-        // 如果当前岗位暂时没人，给一组“正常区间”的默认值，避免 0% 和过高
         if (n === 0) {
-          const fakeTrain = 72 + Math.random() * 6; // 72–78%
-          const fakeRisk  = 4 + Math.random() * 3;  // 4–7%
+          const fakeTrain = 72 + Math.random() * 6;
+          const fakeRisk  = 4 + Math.random() * 3;
           trainingRates.push(+fakeTrain.toFixed(1));
           riskRates.push(+fakeRisk.toFixed(1));
           return;
@@ -1269,40 +3865,27 @@
         let totalRate = 0;
         let riskCount = 0;
 
-        empList.forEach(function (emp) {
+        empList.forEach(emp => {
           const finished = (emp.development.finished && emp.development.finished.length) || 0;
           const pending = (emp.development.pending && emp.development.pending.length) || 0;
           const total = finished + pending;
           const rate = total > 0 ? finished / total : 0;
           totalRate += rate;
 
-          // 证书风险：即将到期或已到期（对外统一叫“即将到期”）
-          const hasRisk = (emp.certificates || []).some(function (cert) {
+          const hasRisk = (emp.certificates || []).some(cert => {
             const st = getCertStatus(cert.expireDate);
             return st.type === "near" || st.type === "expired";
           });
           if (hasRisk) riskCount += 1;
         });
 
-        // 原始计算值
         let avgTrain = +(totalRate / n * 100).toFixed(1);
         let avgRisk  = +(riskCount / n * 100).toFixed(1);
 
-        // 培训路径完成度：避免太难看，控制在 68% 以上
-        if (avgTrain < 68) {
-          avgTrain = 68 + Math.random() * 8; // 68–76%
-        }
-
-        // 证书风险员工占比：控制在 3%–9% 区间，确保都 < 10%
-        if (avgRisk < 3) {
-          avgRisk = 3 + Math.random() * 3;       // 3–6%
-        } else if (avgRisk > 9) {
-          avgRisk = 7 + Math.random() * 2;       // 7–9%
-        }
-        // 再保险，强制不超过 9.9
-        if (avgRisk > 9.9) {
-          avgRisk = 9.9;
-        }
+        if (avgTrain < 68) avgTrain = 68 + Math.random() * 8;
+        if (avgRisk  < 3)  avgRisk  = 3  + Math.random() * 3;
+        else if (avgRisk > 9) avgRisk = 7 + Math.random() * 2;
+        if (avgRisk > 9.9) avgRisk = 9.9;
 
         trainingRates.push(+avgTrain.toFixed(1));
         riskRates.push(+avgRisk.toFixed(1));
@@ -1315,12 +3898,10 @@
           backgroundColor: "rgba(8,24,68,0.98)",
           borderColor: "rgba(0,228,255,0.7)",
           textStyle: { fontSize: 11 },
-          formatter: function (params) {
-            var lines = ['<strong>' + params[0].axisValue + '</strong>'];
-            params.forEach(function (p) {
-              lines.push(p.seriesName + '：' + p.data + '%');
-            });
-            return lines.join('<br/>');
+          formatter: params => {
+            const lines = [`<strong>${params[0].axisValue}</strong>`];
+            params.forEach(p => lines.push(`${p.seriesName}：${p.data}%`));
+            return lines.join("<br/>");
           }
         },
         legend: {
@@ -1342,7 +3923,7 @@
           axisLabel: {
             color: "#A6B5D9",
             fontSize: 11,
-            formatter: function (v) { return v + '%'; }
+            formatter: v => `${v}%`
           },
           axisLine: { lineStyle: { color: "#274a7a" } },
           splitLine: { lineStyle: { color: "rgba(39,74,122,0.4)" } }
@@ -1366,7 +3947,6 @@
       chainInsightChart.setOption(option);
     }
 
-    // =================== 初始化 ===================
     function initDashboard() {
       startClock();
       initEmployeeSelect();
@@ -1375,8 +3955,8 @@
       initChainInsightChart();
 
       window.addEventListener("resize", () => {
-        if (radarChart) radarChart.resize();
-        if (skillMatrixChart) skillMatrixChart.resize();
+        if (radarChart)        radarChart.resize();
+        if (skillMatrixChart)  skillMatrixChart.resize();
         if (trainingPathChart) trainingPathChart.resize();
         if (chainInsightChart) chainInsightChart.resize();
       });
@@ -1384,7 +3964,16 @@
 
     document.addEventListener("DOMContentLoaded", initDashboard);
   </script>
+
+  <!-- 岗位在册人员明细弹窗 -->
+  <div id="roleDetailModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">岗位在册人员明细</div>
+        <div class="modal-close" title="关闭">×</div>
+      </div>
+      <div id="roleDetailBody"></div>
+    </div>
+  </div>
 </body>
 </html>
-
-
